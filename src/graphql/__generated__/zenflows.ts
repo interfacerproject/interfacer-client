@@ -562,7 +562,7 @@ export type EconomicResourceClassificationsFilterParams = {
 
 export type EconomicResourceConnection = {
   edges: Array<EconomicResourceEdge>;
-  pageInfo: PageInfo;
+  pageInfo: EconomicResourcePageInfo;
 };
 
 export type EconomicResourceCreateParams = {
@@ -611,6 +611,12 @@ export type EconomicResourceFilterParams = {
   gtOnhandQuantityHasNumericalValue: InputMaybe<Scalars['Decimal']['input']>;
   id: InputMaybe<Array<Scalars['ID']['input']>>;
   name: InputMaybe<Scalars['String']['input']>;
+  /** Search radius in kilometers for geo search. */
+  nearDistanceKm: InputMaybe<Scalars['Decimal']['input']>;
+  /** Latitude of the center point for geo search. */
+  nearLat: InputMaybe<Scalars['Decimal']['input']>;
+  /** Longitude of the center point for geo search. */
+  nearLong: InputMaybe<Scalars['Decimal']['input']>;
   notCustodian: InputMaybe<Array<Scalars['ID']['input']>>;
   notPrimaryAccountable: InputMaybe<Array<Scalars['ID']['input']>>;
   note: InputMaybe<Scalars['String']['input']>;
@@ -627,8 +633,27 @@ export type EconomicResourceFilterParams = {
   repo: InputMaybe<Scalars['String']['input']>;
 };
 
+export type EconomicResourcePageInfo = {
+  distinctPrimaryAccountableCount: Maybe<Scalars['Int']['output']>;
+  endCursor: Maybe<Scalars['ID']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+  hasPreviousPage: Scalars['Boolean']['output'];
+  pageLimit: Maybe<Scalars['Int']['output']>;
+  startCursor: Maybe<Scalars['ID']['output']>;
+  totalCount: Maybe<Scalars['Int']['output']>;
+};
+
 export type EconomicResourceResponse = {
   economicResource: EconomicResource;
+};
+
+export type EconomicResourceSortField =
+  | 'CREATED_AT'
+  | 'NAME';
+
+export type EconomicResourceSortInput = {
+  direction: SortDirection;
+  field: EconomicResourceSortField;
 };
 
 export type EconomicResourceUpdateParams = {
@@ -701,6 +726,9 @@ export type IMeasure = {
 
 export type InstanceSpecs = {
   specCurrency: ResourceSpecification;
+  specDpp: ResourceSpecification;
+  specMachine: ResourceSpecification;
+  specMaterial: ResourceSpecification;
   specProjectDesign: ResourceSpecification;
   specProjectProduct: ResourceSpecification;
   specProjectService: ResourceSpecification;
@@ -2941,6 +2969,7 @@ export type RootQueryTypeEconomicResourcesArgs = {
   filter: InputMaybe<EconomicResourceFilterParams>;
   first: InputMaybe<Scalars['Int']['input']>;
   last: InputMaybe<Scalars['Int']['input']>;
+  orderBy: InputMaybe<EconomicResourceSortInput>;
 };
 
 
@@ -3489,6 +3518,10 @@ export type ScenarioUpdateParams = {
    */
   refinementOf: InputMaybe<Scalars['ID']['input']>;
 };
+
+export type SortDirection =
+  | 'ASC'
+  | 'DESC';
 
 /** A physical mappable location. */
 export type SpatialThing = {

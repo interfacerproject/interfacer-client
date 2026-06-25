@@ -9,7 +9,7 @@
 import type { CodegenConfig } from "@graphql-codegen/cli";
 
 const config: CodegenConfig = {
-  schema: "https://proxy.interfacer-staging.dyne.im/zenflows/api/play",
+  schema: "https://proxy.dpp-dev.ddns.dyne.org/zenflows/api/play",
   documents: ["./src/**/*.ts"],
   generates: {
     "./src/graphql/__generated__/zenflows.ts": {

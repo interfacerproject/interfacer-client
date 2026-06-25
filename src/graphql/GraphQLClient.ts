@@ -27,13 +27,26 @@ export class GraphQLClient {
   /** Execute a GraphQL query or mutation. */
   async request<TData = unknown, TVariables = Record<string, unknown>>(
     operation: string,
-    variables?: TVariables
+    variables?: TVariables,
+    extraHeaders?: Record<string, string>
   ): Promise<{ data?: TData; errors?: Array<{ message: string }> }> {
-    const body = JSON.stringify({ query: operation, variables });
+    const bodyObj: Record<string, unknown> = { query: operation };
+    if (variables) bodyObj.variables = variables;
+
+    // Extract operation name from the document for servers that require it
+    const opName = extractOperationName(operation);
+    if (opName) bodyObj.operationName = opName;
+
+    const body = JSON.stringify(bodyObj);
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
+
+    // Apply extra headers first (e.g. zenflows-admin for signup)
+    if (extraHeaders) {
+      Object.assign(headers, extraHeaders);
+    }
 
     if (this.signingEnabled) {
       try {
@@ -59,4 +72,10 @@ export class GraphQLClient {
 
     return res.json() as Promise<{ data?: TData; errors?: Array<{ message: string }> }>;
   }
+}
+
+/** Extract the operation name from a GraphQL document string. */
+function extractOperationName(operation: string): string | null {
+  const match = operation.match(/(?:query|mutation)\s+(\w+)/);
+  return match ? match[1]! : null;
 }

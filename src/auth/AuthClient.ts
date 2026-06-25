@@ -114,7 +114,10 @@ export class AuthClient {
         ethereumAddress: this.store.getItem("ethereumAddress") || "",
         ecdhPublicKey: this.store.getItem("ecdhPublicKey") || "",
         bitcoinPublicKey: this.store.getItem("bitcoinPublicKey") || "",
-      }
+      },
+      this.config.zenflowsAdmin
+        ? { "zenflows-admin": this.config.zenflowsAdmin }
+        : undefined
     );
 
     if (res.errors?.length) {

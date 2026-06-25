@@ -126,7 +126,7 @@ export class ResourceClient {
     }>(GQL.CREATE_PROJECT, {
       name: params.name,
       note: params.note || "",
-      metadata: params.metadata || {},
+      metadata: JSON.stringify(params.metadata || {}),
       agent: this.userId,
       creationTime: new Date().toISOString(),
       location: locationId,
@@ -162,7 +162,7 @@ export class ResourceClient {
       unitOne: vars.unitOne,
       name: params.name,
       note: params.note || "",
-      metadata: params.metadata || {},
+      metadata: JSON.stringify(params.metadata || {}),
     });
 
     if (res.errors?.length) throw new Error(`createMachine failed: ${res.errors[0]!.message}`);
@@ -186,7 +186,7 @@ export class ResourceClient {
       process: processId,
       resourceSpec: dppSpecId,
       unitOne: vars.unitOne,
-      dppUlid: { dppServiceUlid: params.dppUlid },
+      dppUlid: JSON.stringify({ dppServiceUlid: params.dppUlid }),
       name: params.name,
       note: params.note || "",
     });
@@ -281,7 +281,7 @@ export class ResourceClient {
       resource: resourceId,
       quantity: quantity || { hasNumericalValue: 1, hasUnit: (await this.getInstanceVars()).unitOne },
       now: new Date().toISOString(),
-      metadata,
+      metadata: JSON.stringify(metadata),
     });
     if (res.errors?.length) throw new Error(`updateMetadata failed: ${res.errors[0]!.message}`);
   }
@@ -388,7 +388,7 @@ export class ResourceClient {
       resourceForked: params.resourceForkedId,
       resourceOrigin: params.resourceOriginId,
       creationTime: new Date().toISOString(),
-      metadata: params.newMetadata,
+      metadata: JSON.stringify(params.newMetadata),
     });
     if (eventsRes.errors?.length) throw new Error(`acceptProposal events failed: ${eventsRes.errors[0]!.message}`);
 
