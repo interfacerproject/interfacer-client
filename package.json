@@ -1,6 +1,7 @@
 {
   "name": "@interfacer/client",
   "version": "0.1.0",
+  "packageManager": "pnpm@9.13.1",
   "description": "TypeScript client SDK for the Interfacer ecosystem — Zenflows, DPP, Inbox, Wallet, Social",
   "license": "AGPL-3.0-or-later",
   "author": "Dyne.org foundation <foundation@dyne.org>",
