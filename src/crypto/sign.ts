@@ -69,11 +69,8 @@ export async function signGraphQLRequest(
 }
 
 /**
- * Sign a request body and return DID headers (used for DPP service).
- *
- * DID headers follow the pattern:
- *   - did-sign: EdDSA signature over the body hash
- *   - did-pk: Base64url-encoded EdDSA public key
+ * Sign a request body for DPP REST API (createDpp, updateDpp, etc.).
+ * Base64-encodes the full JSON body before signing.
  */
 export async function signDidRequest(
   body: string,
@@ -90,7 +87,6 @@ export async function signDidRequest(
   }
 
   const keys = JSON.stringify({ keyring: { eddsa: eddsaKey } });
-  // DID signing base64-encodes the body (same as GraphQL signing)
   const data = JSON.stringify({
     gql: Buffer.from(body, "utf8").toString("base64"),
   });
@@ -105,6 +101,29 @@ export async function signDidRequest(
     "did-sign": parsed.eddsa_signature,
     "did-pk": pk || "",
   };
+}
+
+/**
+ * Sign a file checksum for DPP file upload.
+ * Signs the raw hex SHA-256 checksum (NOT base64-encoded).
+ * This matches the DPP service's verify_graphql.zen contract.
+ */
+export async function signFileUpload(
+  checksumHex: string,
+  store: KeyStorage
+): Promise<string> {
+  const eddsaKey = store.getItem(SIGNING_KEYS.privateKey);
+  if (!eddsaKey) {
+    throw new Error("Missing EdDSA private key. Authenticate first.");
+  }
+
+  const keys = JSON.stringify({ keyring: { eddsa: eddsaKey } });
+  // DPP verify_graphql.zen expects raw hex checksum (matching original main.mjs)
+  const data = JSON.stringify({ gql: checksumHex });
+
+  const { result } = await zencodeExec(SIGN_CONTRACT, { data, keys });
+  const parsed = JSON.parse(result) as { eddsa_signature: string };
+  return parsed.eddsa_signature;
 }
 
 /**

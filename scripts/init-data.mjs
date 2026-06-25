@@ -2,15 +2,6 @@
 
 /**
  * Interfacer Init Data — using @interfacer/client SDK.
- *
- * Creates rich test data matching the original notebook:
- *   - Locations via Nominatim geocoding
- *   - Images via picsum → DPP upload
- *   - Full product/service filter tags via tagged SDK
- *   - Rich DPPs with all sections
- *   - Feedback (reviews + comments)
- *
- * Usage: node --experimental-vm-modules scripts/init-data.mjs
  */
 
 import { readFileSync, existsSync, writeFileSync } from "fs";
@@ -20,6 +11,15 @@ import { createHash } from "crypto";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
+
+// Polyfill fetch for form-data compatibility (same as original notebook)
+import crossFetch from "cross-fetch";
+import FormDataLib from "form-data";
+globalThis.fetch = crossFetch;
+globalThis.Headers = crossFetch.Headers;
+globalThis.Request = crossFetch.Request;
+globalThis.Response = crossFetch.Response;
+globalThis.FormData = FormDataLib;
 
 import { clearInstanceVariablesCache, InterfacerClient, createConfig } from "../dist/index.js";
 clearInstanceVariablesCache();
@@ -71,37 +71,42 @@ const tagging = client.tagging;
 
 async function signZen(didBody, privateKey) {
   const { zencode_exec } = await import("zenroom");
-  const gqlB64 = Buffer.from(didBody, "utf8").toString("base64");
-  const { result } = await zencode_exec(DPP_SIGN_SCRIPT, { data: JSON.stringify({ gql: gqlB64 }), keys: JSON.stringify({ keyring: { eddsa: privateKey } }) });
+  // DPP verify_graphql.zen expects raw hex, not base64
+  const { result } = await zencode_exec(DPP_SIGN_SCRIPT, { data: JSON.stringify({ gql: didBody }), keys: JSON.stringify({ keyring: { eddsa: privateKey } }) });
   return JSON.parse(result).eddsa_signature;
+}
+
+async function dppUpload(buffer, filename, contentType, privateKey, publicKey) {
+  const hash = createHash("sha256").update(buffer).digest("hex");
+  const sig = await signZen(hash, privateKey);
+  const form = new FormData();
+  form.append("file", buffer, { filename, contentType });
+  const headers = { ...form.getHeaders(), "did-pk": publicKey, "did-sign": sig };
+  const res = await fetch(`${DPP_URL}/upload`, { method: "POST", headers, body: form });
+  const data = await res.json();
+  if (!res.ok || data.error) { throw new Error(data.error || res.statusText); }
+  return { id: data.id, fileName: filename, contentType, url: `${DPP_URL}/file/${data.id}`, size: buffer.length, checksum: hash, uploadedAt: new Date().toISOString() };
 }
 
 async function uploadPicsumImage(seed, privateKey, publicKey) {
   try {
     const imgRes = await fetch(`https://picsum.photos/seed/${encodeURIComponent(seed)}/400/300`);
-    if (!imgRes.ok) return null;
+    if (!imgRes.ok) { console.log(`    ⚠ Image HTTP ${imgRes.status}`); return null; }
     const buf = Buffer.from(await imgRes.arrayBuffer());
-    const sha256 = createHash("sha256").update(buf).digest("hex");
-    const sig = await signZen(sha256, privateKey);
-    const form = new (await import("form-data")).default();
-    form.append("file", buf, { filename: `${seed}.jpg`, contentType: "image/jpeg" });
-    const dppRes = await fetch(`${DPP_URL}/upload`, { method: "POST", headers: { "did-pk": publicKey, "did-sign": sig }, body: form });
-    if (!dppRes.ok) return null;
-    return `${DPP_URL}/file/${encodeURIComponent((await dppRes.json()).id)}`;
-  } catch { return null; }
+    const att = await dppUpload(buf, `${seed}.jpg`, "image/jpeg", privateKey, publicKey);
+    console.log(`    ✓ Image: ${att.fileName} (${att.size}B)`);
+    return `${DPP_URL}/file/${encodeURIComponent(att.id)}`;
+  } catch(e) { console.log(`    ⚠ Image error: ${e.message}`); return null; }
 }
 
 async function uploadStlModel(filePath, privateKey, publicKey) {
-  if (!existsSync(filePath)) return null;
-  const buf = readFileSync(filePath);
-  const sha256 = createHash("sha256").update(buf).digest("hex");
-  const sig = await signZen(sha256, privateKey);
-  const form = new (await import("form-data")).default();
-  form.append("file", buf, { filename: basename(filePath) });
-  const res = await fetch(`${DPP_URL}/upload`, { method: "POST", headers: { "did-pk": publicKey, "did-sign": sig }, body: form });
-  if (!res.ok) return null;
-  const att = await res.json();
-  return { contentType: att.contentType, downloadUrl: `${DPP_URL}/file/${att.id}`, extension: extname(filePath).slice(1), fileName: att.fileName, id: att.id, mimeType: att.contentType, name: att.fileName, size: att.size, storage: "dpp", uploadedAt: att.uploadedAt, url: `${DPP_URL}/file/${att.id}`, checksum: att.checksum };
+  if (!existsSync(filePath)) { console.log(`    ⚠ STL not found: ${filePath}`); return null; }
+  try {
+    const buf = readFileSync(filePath);
+    const att = await dppUpload(buf, basename(filePath), "application/sla", privateKey, publicKey);
+    console.log(`    ✓ STL: ${att.fileName} (${att.size}B)`);
+    return { contentType: att.contentType, downloadUrl: att.url, extension: extname(filePath).slice(1), fileName: att.fileName, id: att.id, mimeType: att.contentType, name: att.fileName, size: att.size, storage: "dpp", uploadedAt: att.uploadedAt, url: att.url, checksum: att.checksum };
+  } catch(e) { console.log(`    ⚠ STL error: ${e.message}`); return null; }
 }
 
 async function lookupLocation(query) {

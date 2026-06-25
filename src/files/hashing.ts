@@ -8,7 +8,7 @@
  * Ported from interfacer-gui lib/fileUpload.ts
  */
 
-import { hashFileForZenflows, signDidRequest } from "../crypto/sign";
+import { hashFileForZenflows, signFileUpload } from "../crypto/sign";
 import { KeyStorage } from "../config/storage";
 
 // ─── Zenflows File Types ─────────────────────────────────────────────
@@ -116,7 +116,8 @@ export async function uploadFileToDpp(
   store: KeyStorage
 ): Promise<DppAttachment> {
   const checksum = await hashFileSHA256(file);
-  const signHeaders = await signDidRequest(checksum, store);
+  const signature = await signFileUpload(checksum, store);
+  const publicKey = store.getItem("eddsaPublicKey") || "";
 
   const formData = new FormData();
   formData.append("file", file);
@@ -124,8 +125,8 @@ export async function uploadFileToDpp(
   const response = await fetch(`${dppUrl}/upload`, {
     method: "POST",
     headers: {
-      "did-pk": signHeaders["did-pk"],
-      "did-sign": signHeaders["did-sign"],
+      "did-pk": publicKey,
+      "did-sign": signature,
     },
     body: formData,
   });
