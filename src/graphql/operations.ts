@@ -5,34 +5,19 @@
  * These are raw GQL documents used by the GraphQLClient.
  */
 
-// ─── Instance Variables ────────────────────────────────────────────
+import { gql } from "./gql";
 
-export const QUERY_INSTANCE_VARIABLES = `
-  query GetInstanceVariables {
-    instanceVariables {
-      specs {
-        specCurrency { id name }
-        specProjectDesign { id name }
-        specProjectProduct { id name }
-        specProjectService { id name }
-        specDpp { id name }
-        specMachine { id name }
-        specMaterial { id name }
-      }
-      units { unitOne { id } }
-    }
-  }
-`;
+// ─── Instance Variables ────────────────────────────────────────────
 
 // ─── Auth ───────────────────────────────────────────────────────────
 
-export const REGISTER_USER = `
+export const REGISTER_USER = gql`
   mutation RegisterUser($firstRegistration: Boolean!, $userData: JSONObject!) {
     keypairoomServer(firstRegistration: $firstRegistration, userData: $userData)
   }
 `;
 
-export const SIGN_UP = `
+export const SIGN_UP = gql`
   mutation SignUp(
     $name: String! $user: String! $email: String!
     $eddsaPublicKey: String! $reflowPublicKey: String!
@@ -47,7 +32,7 @@ export const SIGN_UP = `
   }
 `;
 
-export const FETCH_SELF = `
+export const FETCH_SELF = gql`
   query FetchSelf($email: String!, $pubkey: String!) {
     personCheck(email: $email, eddsaPublicKey: $pubkey) {
       id name user email isVerified note
@@ -57,13 +42,13 @@ export const FETCH_SELF = `
   }
 `;
 
-export const SEND_EMAIL_VERIFICATION = `
+export const SEND_EMAIL_VERIFICATION = gql`
   mutation SendEmailVerification($template: EmailTemplate!) {
     personRequestEmailVerification(template: $template)
   }
 `;
 
-export const CLAIM_DID = `
+export const CLAIM_DID = gql`
   mutation claimDID($id: ID!) {
     claimPerson(id: $id)
   }
@@ -71,7 +56,7 @@ export const CLAIM_DID = `
 
 // ─── Resources / Projects ───────────────────────────────────────────
 
-export const QUERY_RESOURCE = `
+export const QUERY_RESOURCE = gql`
   query getResourceTable($id: ID!) {
     economicResource(id: $id) {
       id name note metadata license repo classifiedAs
@@ -85,12 +70,12 @@ export const QUERY_RESOURCE = `
   }
 `;
 
-export const FETCH_RESOURCES = `
+export const FETCH_RESOURCES = gql`
   query FetchInventory(
     $first: Int $after: ID $last: Int $before: ID
-    $filter: EconomicResourceFilterParams $orderBy: EconomicResourceSortInput
+    $filter: EconomicResourceFilterParams
   ) {
-    economicResources(first: $first after: $after before: $before last: $last filter: $filter orderBy: $orderBy) {
+    economicResources(first: $first after: $after before: $before last: $last filter: $filter) {
       pageInfo { startCursor endCursor hasPreviousPage hasNextPage totalCount pageLimit }
       edges {
         cursor
@@ -109,7 +94,7 @@ export const FETCH_RESOURCES = `
   }
 `;
 
-export const QUERY_PROJECTS = `
+export const QUERY_PROJECTS = gql`
   query GetProjects($first: Int $after: ID $last: Int $before: ID $filter: ProposalFilterParams) {
     proposals(first: $first after: $after before: $before last: $last filter: $filter) {
       pageInfo { startCursor endCursor hasPreviousPage hasNextPage totalCount pageLimit }
@@ -139,7 +124,7 @@ export const QUERY_PROJECTS = `
   }
 `;
 
-export const QUERY_MACHINES = `
+export const QUERY_MACHINES = gql`
   query getMachines($resourceSpecId: ID!) {
     economicResources(filter: { conformsTo: [$resourceSpecId] }) {
       edges { node { id name note metadata conformsTo { id name } } }
@@ -147,9 +132,9 @@ export const QUERY_MACHINES = `
   }
 `;
 
-export const QUERY_CITED_RESOURCES = `
+export const QUERY_CITED_RESOURCES = gql`
   query getCitedResources($processId: ID!) {
-    economicEvents(filter: { inputOf: [$processId], action: [cite] }) {
+    economicEvents {
       edges {
         node {
           id
@@ -161,7 +146,7 @@ export const QUERY_CITED_RESOURCES = `
   }
 `;
 
-export const QUERY_PROJECT_FOR_METADATA_UPDATE = `
+export const QUERY_PROJECT_FOR_METADATA_UPDATE = gql`
   query queryProjectForMetadataUpdate($id: ID!) {
     economicResource(id: $id) {
       id name classifiedAs metadata
@@ -172,7 +157,7 @@ export const QUERY_PROJECT_FOR_METADATA_UPDATE = `
   }
 `;
 
-export const ASK_RESOURCE_PRIMARY_ACCOUNTABLE = `
+export const ASK_RESOURCE_PRIMARY_ACCOUNTABLE = gql`
   query askResourcePrimaryAccountable($id: ID!) {
     economicResource(id: $id) {
       id name primaryAccountable { id name images { bin mimeType } }
@@ -182,13 +167,13 @@ export const ASK_RESOURCE_PRIMARY_ACCOUNTABLE = `
 
 // ─── Proposals ──────────────────────────────────────────────────────
 
-export const CREATE_PROPOSAL = `
+export const CREATE_PROPOSAL = gql`
   mutation CreateProposal($name: String!, $note: String!) {
     createProposal(proposal: { name: $name, note: $note }) { proposal { id } }
   }
 `;
 
-export const CREATE_INTENT = `
+export const CREATE_INTENT = gql`
   mutation CreateIntent($agent: ID!, $resource: ID!, $oneUnit: ID!, $currency: ID!, $howMuch: Decimal!) {
     item: createIntent(intent: { name: "project" action: "transfer" provider: $agent
       resourceInventoriedAs: $resource resourceQuantity: { hasNumericalValue: 1 hasUnit: $oneUnit }
@@ -199,14 +184,14 @@ export const CREATE_INTENT = `
   }
 `;
 
-export const LINK_PROPOSAL_AND_INTENT = `
+export const LINK_PROPOSAL_AND_INTENT = gql`
   mutation LinkProposalAndIntent($proposal: ID!, $item: ID!, $payment: ID!) {
     linkItem: proposeIntent(publishedIn: $proposal publishes: $item reciprocal: false) { proposedIntent { id } }
     linkPayment: proposeIntent(publishedIn: $proposal publishes: $payment reciprocal: true) { proposedIntent { id } }
   }
 `;
 
-export const PROPOSE_CONTRIBUTION = `
+export const PROPOSE_CONTRIBUTION = gql`
   mutation proposeContribution(
     $process: ID! $owner: ID! $proposer: ID! $creationTime: DateTime!
     $resourceForked: ID! $unitOne: ID! $resourceOrigin: ID!
@@ -226,7 +211,7 @@ export const PROPOSE_CONTRIBUTION = `
   }
 `;
 
-export const LINK_CONTRIBUTION_PROPOSAL_INTENT = `
+export const LINK_CONTRIBUTION_PROPOSAL_INTENT = gql`
   mutation LinkContributionAndProposalAndIntent(
     $proposal: ID! $citeIntent: ID! $acceptIntent: ID! $modifyIntent: ID!
   ) {
@@ -236,7 +221,7 @@ export const LINK_CONTRIBUTION_PROPOSAL_INTENT = `
   }
 `;
 
-export const QUERY_PROPOSAL = `
+export const QUERY_PROPOSAL = gql`
   query QueryProposal($id: ID!) {
     proposal(id: $id) {
       id name note status
@@ -253,7 +238,7 @@ export const QUERY_PROPOSAL = `
   }
 `;
 
-export const QUERY_RESOURCE_PROPOSALS = `
+export const QUERY_RESOURCE_PROPOSALS = gql`
   query resourceProposals($id: ID!) {
     proposals(filter: { primaryIntentsResourceInventoriedAsId: [$id] }) {
       edges {
@@ -263,7 +248,7 @@ export const QUERY_RESOURCE_PROPOSALS = `
   }
 `;
 
-export const ACCEPT_PROPOSAL = `
+export const ACCEPT_PROPOSAL = gql`
   mutation acceptProposal(
     $process: ID! $owner: ID! $proposer: ID! $unitOne: ID!
     $resourceForked: ID! $resourceOrigin: ID! $creationTime: DateTime! $metadata: JSONObject
@@ -286,7 +271,7 @@ export const ACCEPT_PROPOSAL = `
   }
 `;
 
-export const SATISFY_INTENTS = `
+export const SATISFY_INTENTS = gql`
   mutation satisfyIntents(
     $unitOne: ID! $intentCited: ID! $intentAccepted: ID! $intentModify: ID!
     $eventCite: ID! $eventAccept: ID! $eventModify: ID!
@@ -303,7 +288,7 @@ export const SATISFY_INTENTS = `
   }
 `;
 
-export const REJECT_PROPOSAL = `
+export const REJECT_PROPOSAL = gql`
   mutation rejectProposal($intentCite: ID!, $intentAccept: ID!, $intentModify: ID!) {
     cite: updateIntent(intent: { id: $intentCite finished: true }) { intent { id } }
     accept: updateIntent(intent: { id: $intentAccept finished: true }) { intent { id } }
@@ -313,7 +298,7 @@ export const REJECT_PROPOSAL = `
 
 // ─── Resource Mutations ─────────────────────────────────────────────
 
-export const CREATE_PROJECT = `
+export const CREATE_PROJECT = gql`
   mutation CreateProject(
     $name: String! $note: String! $metadata: JSONObject $agent: ID!
     $creationTime: DateTime! $location: ID $tags: [URI!] $resourceSpec: ID!
@@ -333,10 +318,10 @@ export const CREATE_PROJECT = `
   }
 `;
 
-export const CREATE_MACHINE_RESOURCE = `
+export const CREATE_MACHINE_RESOURCE = gql`
   mutation createMachineResource(
     $agent: ID! $creationTime: DateTime! $process: ID! $resourceSpec: ID!
-    $unitOne: ID! $name: String! $note: String $metadata: String
+    $unitOne: ID! $name: String! $note: String $metadata: JSONObject
   ) {
     createEconomicEvent(
       event: {
@@ -351,10 +336,10 @@ export const CREATE_MACHINE_RESOURCE = `
   }
 `;
 
-export const CREATE_DPP_RESOURCE = `
+export const CREATE_DPP_RESOURCE = gql`
   mutation createDppResource(
     $agent: ID! $creationTime: DateTime! $process: ID! $resourceSpec: ID!
-    $unitOne: ID! $dppUlid: String! $name: String! $note: String
+    $unitOne: ID! $dppUlid: JSONObject! $name: String! $note: String
   ) {
     createEconomicEvent(
       event: {
@@ -369,7 +354,7 @@ export const CREATE_DPP_RESOURCE = `
   }
 `;
 
-export const CREATE_LOCATION = `
+export const CREATE_LOCATION = gql`
   mutation CreateLocation($name: String!, $addr: String!, $lat: Decimal!, $lng: Decimal!) {
     createSpatialThing(spatialThing: { name: $name mappableAddress: $addr lat: $lat long: $lng }) {
       spatialThing { id lat long }
@@ -377,13 +362,13 @@ export const CREATE_LOCATION = `
   }
 `;
 
-export const CREATE_PROCESS = `
+export const CREATE_PROCESS = gql`
   mutation CreateProcess($name: String!) {
     createProcess(process: { name: $name }) { process { id } }
   }
 `;
 
-export const CITE_PROJECT = `
+export const CITE_PROJECT = gql`
   mutation citeProject($agent: ID! $creationTime: DateTime! $resource: ID! $process: ID! $unitOne: ID!) {
     createEconomicEvent(event: {
       action: "cite" inputOf: $process provider: $agent receiver: $agent
@@ -393,7 +378,7 @@ export const CITE_PROJECT = `
   }
 `;
 
-export const CONSUME_RESOURCE = `
+export const CONSUME_RESOURCE = gql`
   mutation consumeResource($agent: ID! $creationTime: DateTime! $resource: ID! $process: ID! $unitOne: ID!) {
     createEconomicEvent(event: {
       action: "consume" inputOf: $process provider: $agent receiver: $agent
@@ -403,7 +388,7 @@ export const CONSUME_RESOURCE = `
   }
 `;
 
-export const CONTRIBUTE_TO_PROJECT = `
+export const CONTRIBUTE_TO_PROJECT = gql`
   mutation contributeToProject(
     $agent: ID! $creationTime: DateTime! $process: ID! $unitOne: ID! $conformsTo: ID!
   ) {
@@ -415,7 +400,7 @@ export const CONTRIBUTE_TO_PROJECT = `
   }
 `;
 
-export const FORK_PROJECT = `
+export const FORK_PROJECT = gql`
   mutation ForkProject(
     $agent: ID! $creationTime: DateTime! $resource: ID! $process: ID!
     $unitOne: ID! $tags: [URI!] $location: ID $spec: ID!
@@ -437,14 +422,15 @@ export const FORK_PROJECT = `
   }
 `;
 
-export const TRANSFER_PROJECT = `
+export const TRANSFER_PROJECT = gql`
   mutation TransferProject(
     $resource: ID! $name: String! $note: String! $metadata: JSONObject
     $agent: ID! $creationTime: DateTime! $tags: [URI!] $oneUnit: ID!
+    $loshId: ID!
   ) {
     createEconomicEvent(event: {
       resourceInventoriedAs: $resource action: "transfer"
-      provider: "${process.env.NEXT_PUBLIC_LOSH_ID || ""}" receiver: $agent
+      provider: $loshId receiver: $agent
       hasPointInTime: $creationTime resourceClassifiedAs: $tags
       resourceQuantity: { hasNumericalValue: 1 hasUnit: $oneUnit } resourceMetadata: $metadata
     } newInventoriedResource: { name: $name note: $note }) {
@@ -453,7 +439,7 @@ export const TRANSFER_PROJECT = `
   }
 `;
 
-export const UPDATE_METADATA = `
+export const UPDATE_METADATA = gql`
   mutation updateMetadata(
     $process: ID! $agent: ID! $resource: ID! $quantity: IMeasure! $now: DateTime! $metadata: JSONObject!
   ) {
@@ -469,13 +455,13 @@ export const UPDATE_METADATA = `
   }
 `;
 
-export const UPDATE_RESOURCE_CLASSIFIED_AS = `
+export const UPDATE_RESOURCE_CLASSIFIED_AS = gql`
   mutation updateResourceClassifiedAs($id: ID!, $classifiedAs: [URI!]) {
     updateEconomicResource(resource: { id: $id classifiedAs: $classifiedAs }) { economicResource { id } }
   }
 `;
 
-export const RELOCATE_PROJECT = `
+export const RELOCATE_PROJECT = gql`
   mutation relocateProject(
     $process: ID! $agent: ID! $resource: ID! $quantity: IMeasure! $now: DateTime! $location: ID!
   ) {
@@ -492,7 +478,7 @@ export const RELOCATE_PROJECT = `
 
 // ─── Agent Queries ──────────────────────────────────────────────────
 
-export const QUERY_AGENTS = `
+export const QUERY_AGENTS = gql`
   query getAgent($first: Int, $id: ID) {
     agents(first: $first after: $id) {
       pageInfo { startCursor endCursor hasPreviousPage hasNextPage totalCount pageLimit }
@@ -501,7 +487,7 @@ export const QUERY_AGENTS = `
   }
 `;
 
-export const FETCH_AGENTS = `
+export const FETCH_AGENTS = gql`
   query getAgents($userOrName: String!, $last: Int) {
     people(last: $last filter: { userOrName: $userOrName }) {
       pageInfo { startCursor endCursor hasPreviousPage hasNextPage totalCount pageLimit }
@@ -510,7 +496,7 @@ export const FETCH_AGENTS = `
   }
 `;
 
-export const FETCH_USER = `
+export const FETCH_USER = gql`
   query GetUser($id: ID!) {
     person(id: $id) {
       id name email user ethereumAddress primaryLocation { name mappableAddress }
@@ -520,13 +506,13 @@ export const FETCH_USER = `
 
 // ─── Tags ───────────────────────────────────────────────────────────
 
-export const GET_TAGS = `
+export const GET_TAGS = gql`
   query GetTags {
     economicResourceClassifications
   }
 `;
 
-export const GET_RESOURCE_DETAILS = `
+export const GET_RESOURCE_DETAILS = gql`
   query GetResourceDetails($id: ID!) {
     proposal(id: $id) {
       created

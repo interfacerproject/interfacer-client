@@ -40,6 +40,16 @@ export interface InterfacerConfig {
     lookup: string;
   };
 
+  /** Manual ResourceSpecification IDs for instances that don't expose them via instanceVariables. */
+  specs?: {
+    /** DPP spec ID (for createDppResource) */
+    dpp?: string;
+    /** Machine spec ID (for createMachine) */
+    machine?: string;
+    /** Material spec ID (for material classification) */
+    material?: string;
+  };
+
   /** Zenflows admin token (needed for sign-up mutations) */
   zenflowsAdmin?: string;
 

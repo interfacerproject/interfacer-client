@@ -72,8 +72,8 @@ export class ResourceClient {
       case ProjectType.DESIGN: return vars.projectDesign.id;
       case ProjectType.PRODUCT: return vars.projectProduct.id;
       case ProjectType.SERVICE: return vars.projectService.id;
-      case ProjectType.MACHINE: return vars.machine.id;
-      case ProjectType.DPP: return vars.dpp.id;
+      case ProjectType.MACHINE: return this.config.specs?.machine || "";
+      case ProjectType.DPP: return this.config.specs?.dpp || "";
     }
   }
 
@@ -126,7 +126,7 @@ export class ResourceClient {
     }>(GQL.CREATE_PROJECT, {
       name: params.name,
       note: params.note || "",
-      metadata: JSON.stringify(params.metadata || {}),
+      metadata: params.metadata || {},
       agent: this.userId,
       creationTime: new Date().toISOString(),
       location: locationId,
@@ -147,6 +147,9 @@ export class ResourceClient {
 
   async createMachine(params: CreateMachineParams): Promise<{ id: string; name: string }> {
     const vars = await this.getInstanceVars();
+    const machineSpecId = this.config.specs?.machine;
+    if (!machineSpecId) throw new Error("specs.machine not configured");
+
     const processId = await this.createProcess(`creation of machine ${params.name}`);
 
     const res = await this.graphql.request<{
@@ -155,11 +158,11 @@ export class ResourceClient {
       agent: this.userId,
       creationTime: new Date().toISOString(),
       process: processId,
-      resourceSpec: vars.machine.id,
+      resourceSpec: machineSpecId,
       unitOne: vars.unitOne,
       name: params.name,
       note: params.note || "",
-      metadata: JSON.stringify(params.metadata || {}),
+      metadata: params.metadata || {},
     });
 
     if (res.errors?.length) throw new Error(`createMachine failed: ${res.errors[0]!.message}`);
@@ -170,6 +173,9 @@ export class ResourceClient {
 
   async createDppResource(params: CreateDppParams): Promise<{ id: string; name: string }> {
     const vars = await this.getInstanceVars();
+    const dppSpecId = this.config.specs?.dpp;
+    if (!dppSpecId) throw new Error("specs.dpp not configured");
+
     const processId = await this.createProcess(`DPP creation for ${params.name}`);
 
     const res = await this.graphql.request<{
@@ -178,9 +184,9 @@ export class ResourceClient {
       agent: this.userId,
       creationTime: new Date().toISOString(),
       process: processId,
-      resourceSpec: vars.dpp.id,
+      resourceSpec: dppSpecId,
       unitOne: vars.unitOne,
-      dppUlid: JSON.stringify({ dppServiceUlid: params.dppUlid }),
+      dppUlid: { dppServiceUlid: params.dppUlid },
       name: params.name,
       note: params.note || "",
     });
@@ -216,9 +222,10 @@ export class ResourceClient {
   }
 
   async getMachines(): Promise<unknown> {
-    const vars = await this.getInstanceVars();
+    const machineSpecId = this.config.specs?.machine;
+    if (!machineSpecId) throw new Error("specs.machine not configured");
     const res = await this.graphql.request(GQL.QUERY_MACHINES, {
-      resourceSpecId: vars.machine.id,
+      resourceSpecId: machineSpecId,
     });
     return res.data || {};
   }
@@ -274,7 +281,7 @@ export class ResourceClient {
       resource: resourceId,
       quantity: quantity || { hasNumericalValue: 1, hasUnit: (await this.getInstanceVars()).unitOne },
       now: new Date().toISOString(),
-      metadata: JSON.stringify(metadata),
+      metadata,
     });
     if (res.errors?.length) throw new Error(`updateMetadata failed: ${res.errors[0]!.message}`);
   }
@@ -381,7 +388,7 @@ export class ResourceClient {
       resourceForked: params.resourceForkedId,
       resourceOrigin: params.resourceOriginId,
       creationTime: new Date().toISOString(),
-      metadata: JSON.stringify(params.newMetadata),
+      metadata: params.newMetadata,
     });
     if (eventsRes.errors?.length) throw new Error(`acceptProposal events failed: ${eventsRes.errors[0]!.message}`);
 

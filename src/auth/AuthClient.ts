@@ -14,54 +14,13 @@ import { KeyStorage } from "../config/storage";
 import { deriveKeys, recreateKeys } from "../crypto/keypair";
 import { GraphQLClient } from "../graphql/GraphQLClient";
 import { Keyring, UserChallenges, UserProfile } from "../types/entities";
-
-// ─── GraphQL operations ─────────────────────────────────────────────
-
-const REGISTER_USER = `
-  mutation RegisterUser($firstRegistration: Boolean!, $userData: JSONObject!) {
-    keypairoomServer(firstRegistration: $firstRegistration, userData: $userData)
-  }
-`;
-
-const SIGN_UP = `
-  mutation SignUp(
-    $name: String!, $user: String!, $email: String!,
-    $eddsaPublicKey: String!, $reflowPublicKey: String!,
-    $ethereumAddress: String!, $ecdhPublicKey: String!,
-    $bitcoinPublicKey: String!
-  ) {
-    createPerson(person: {
-      name: $name, user: $user, email: $email,
-      eddsaPublicKey: $eddsaPublicKey, reflowPublicKey: $reflowPublicKey,
-      ethereumAddress: $ethereumAddress, ecdhPublicKey: $ecdhPublicKey,
-      bitcoinPublicKey: $bitcoinPublicKey
-    }) {
-      agent { id name user email }
-    }
-  }
-`;
-
-const FETCH_SELF = `
-  query FetchSelf($email: String!, $pubkey: String!) {
-    personCheck(email: $email, eddsaPublicKey: $pubkey) {
-      id name user email isVerified note
-      primaryLocation { id name mappableAddress lat long }
-      images { bin mimeType }
-    }
-  }
-`;
-
-const SEND_EMAIL_VERIFICATION = `
-  mutation SendEmailVerification($template: EmailTemplate!) {
-    personRequestEmailVerification(template: $template)
-  }
-`;
-
-const CLAIM_DID = `
-  mutation claimDID($id: ID!) {
-    claimPerson(id: $id)
-  }
-`;
+import {
+  CLAIM_DID,
+  FETCH_SELF,
+  REGISTER_USER,
+  SEND_EMAIL_VERIFICATION,
+  SIGN_UP,
+} from "../graphql/operations";
 
 // ─── Email template enum matching Zenflows backend ──────────────────
 

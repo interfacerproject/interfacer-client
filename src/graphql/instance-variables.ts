@@ -2,17 +2,17 @@
  * Instance variables resolver.
  *
  * Fetches configuration values from the Zenflows instance:
- * - ResourceSpecification IDs (project types, DPP, machines, materials)
+ * - ResourceSpecification IDs (project types)
  * - Unit IDs and currency spec
  *
- * These are needed as variables for all project creation mutations.
+ * Note: specDpp, specMachine, specMaterial are NOT available via instanceVariables
+ * on all Zenflows instances. Configure them manually via InterfacerConfig.
  */
 
+import { gql } from "./gql";
 import { GraphQLClient } from "../graphql/GraphQLClient";
 
-// ─── GraphQL Query ───────────────────────────────────────────────────
-
-const QUERY_INSTANCE_VARIABLES = `
+const QUERY_INSTANCE_VARIABLES = gql`
   query GetInstanceVariables {
     instanceVariables {
       specs {
@@ -20,9 +20,6 @@ const QUERY_INSTANCE_VARIABLES = `
         specProjectDesign { id name }
         specProjectProduct { id name }
         specProjectService { id name }
-        specDpp { id name }
-        specMachine { id name }
-        specMaterial { id name }
       }
       units {
         unitOne { id }
@@ -30,8 +27,6 @@ const QUERY_INSTANCE_VARIABLES = `
     }
   }
 `;
-
-// ─── Types ───────────────────────────────────────────────────────────
 
 export interface SpecInfo {
   id: string;
@@ -42,19 +37,10 @@ export interface InstanceVariables {
   projectDesign: SpecInfo;
   projectProduct: SpecInfo;
   projectService: SpecInfo;
-  dpp: SpecInfo;
-  machine: SpecInfo;
-  material: SpecInfo;
   currency: SpecInfo;
   unitOne: string;
 }
 
-// ─── Resolver ────────────────────────────────────────────────────────
-
-/**
- * Fetch and resolve instance variables from Zenflows.
- * Cached in a module-level variable for the session.
- */
 let cachedVars: InstanceVariables | null = null;
 
 export async function getInstanceVariables(client: GraphQLClient): Promise<InstanceVariables> {
@@ -67,9 +53,6 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
         specProjectDesign: { id: string; name: string };
         specProjectProduct: { id: string; name: string };
         specProjectService: { id: string; name: string };
-        specDpp: { id: string; name: string };
-        specMachine: { id: string; name: string };
-        specMaterial: { id: string; name: string };
       };
       units: {
         unitOne: { id: string };
@@ -88,9 +71,6 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
     projectDesign: d.specs.specProjectDesign,
     projectProduct: d.specs.specProjectProduct,
     projectService: d.specs.specProjectService,
-    dpp: d.specs.specDpp,
-    machine: d.specs.specMachine,
-    material: d.specs.specMaterial,
     currency: d.specs.specCurrency,
     unitOne: d.units.unitOne.id,
   };
@@ -98,9 +78,6 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
   return cachedVars;
 }
 
-/**
- * Clear the cached instance variables (e.g. after reconnecting).
- */
 export function clearInstanceVariablesCache(): void {
   cachedVars = null;
 }

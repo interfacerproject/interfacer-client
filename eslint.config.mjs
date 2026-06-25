@@ -5,7 +5,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["dist/", "node_modules/", "*.config.*"],
+    ignores: ["dist/", "node_modules/", "*.config.*", "src/graphql/__generated__/**"],
   },
   {
     rules: {
