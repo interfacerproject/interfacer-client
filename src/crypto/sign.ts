@@ -90,9 +90,9 @@ export async function signDidRequest(
   }
 
   const keys = JSON.stringify({ keyring: { eddsa: eddsaKey } });
-  // DID signing signs the hex-encoded body content
+  // DID signing base64-encodes the body (same as GraphQL signing)
   const data = JSON.stringify({
-    gql: body, // raw body, not base64
+    gql: Buffer.from(body, "utf8").toString("base64"),
   });
 
   const { result } = await zencodeExec(SIGN_CONTRACT, { data, keys });

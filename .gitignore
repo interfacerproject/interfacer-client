@@ -4,3 +4,5 @@ dist/
 .env
 .env.local
 .history/
+form-data
+.env

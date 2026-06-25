@@ -3650,7 +3650,7 @@ export type UnitUpdateParams = {
 export type GetInstanceVariablesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetInstanceVariablesQuery = { instanceVariables: { specs: { specCurrency: { id: string, name: string }, specProjectDesign: { id: string, name: string }, specProjectProduct: { id: string, name: string }, specProjectService: { id: string, name: string } }, units: { unitOne: { id: string } } } };
+export type GetInstanceVariablesQuery = { instanceVariables: { specs: { specCurrency: { id: string, name: string }, specProjectDesign: { id: string, name: string }, specProjectProduct: { id: string, name: string }, specProjectService: { id: string, name: string }, specDpp: { id: string, name: string }, specMachine: { id: string, name: string }, specMaterial: { id: string, name: string } }, units: { unitOne: { id: string } } } };
 
 export type RegisterUserMutationVariables = Exact<{
   firstRegistration: Scalars['Boolean']['input'];

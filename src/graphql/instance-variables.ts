@@ -20,6 +20,9 @@ const QUERY_INSTANCE_VARIABLES = gql`
         specProjectDesign { id name }
         specProjectProduct { id name }
         specProjectService { id name }
+        specDpp { id name }
+        specMachine { id name }
+        specMaterial { id name }
       }
       units {
         unitOne { id }
@@ -37,6 +40,9 @@ export interface InstanceVariables {
   projectDesign: SpecInfo;
   projectProduct: SpecInfo;
   projectService: SpecInfo;
+  dpp?: SpecInfo;
+  machine?: SpecInfo;
+  material?: SpecInfo;
   currency: SpecInfo;
   unitOne: string;
 }
@@ -53,6 +59,9 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
         specProjectDesign: { id: string; name: string };
         specProjectProduct: { id: string; name: string };
         specProjectService: { id: string; name: string };
+        specDpp?: { id: string; name: string } | null;
+        specMachine?: { id: string; name: string } | null;
+        specMaterial?: { id: string; name: string } | null;
       };
       units: {
         unitOne: { id: string };
@@ -71,6 +80,9 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
     projectDesign: d.specs.specProjectDesign,
     projectProduct: d.specs.specProjectProduct,
     projectService: d.specs.specProjectService,
+    dpp: d.specs.specDpp ?? undefined,
+    machine: d.specs.specMachine ?? undefined,
+    material: d.specs.specMaterial ?? undefined,
     currency: d.specs.specCurrency,
     unitOne: d.units.unitOne.id,
   };

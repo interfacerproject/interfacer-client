@@ -66,3 +66,6 @@ export type {
 // Config
 export { createConfig } from "./config/config";
 export type { InterfacerConfig } from "./config/config";
+
+// Instance variables cache control
+export { clearInstanceVariablesCache } from "./graphql/instance-variables";

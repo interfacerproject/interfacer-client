@@ -72,8 +72,8 @@ export class ResourceClient {
       case ProjectType.DESIGN: return vars.projectDesign.id;
       case ProjectType.PRODUCT: return vars.projectProduct.id;
       case ProjectType.SERVICE: return vars.projectService.id;
-      case ProjectType.MACHINE: return this.config.specs?.machine || "";
-      case ProjectType.DPP: return this.config.specs?.dpp || "";
+      case ProjectType.MACHINE: return vars.machine?.id || this.config.specs?.machine || "";
+      case ProjectType.DPP: return vars.dpp?.id || this.config.specs?.dpp || "";
     }
   }
 
@@ -147,8 +147,8 @@ export class ResourceClient {
 
   async createMachine(params: CreateMachineParams): Promise<{ id: string; name: string }> {
     const vars = await this.getInstanceVars();
-    const machineSpecId = this.config.specs?.machine;
-    if (!machineSpecId) throw new Error("specs.machine not configured");
+    const machineSpecId = vars.machine?.id || this.config.specs?.machine;
+    if (!machineSpecId) throw new Error("Machine spec ID not found in instance variables or config");
 
     const processId = await this.createProcess(`creation of machine ${params.name}`);
 
@@ -173,8 +173,8 @@ export class ResourceClient {
 
   async createDppResource(params: CreateDppParams): Promise<{ id: string; name: string }> {
     const vars = await this.getInstanceVars();
-    const dppSpecId = this.config.specs?.dpp;
-    if (!dppSpecId) throw new Error("specs.dpp not configured");
+    const dppSpecId = vars.dpp?.id || this.config.specs?.dpp;
+    if (!dppSpecId) throw new Error("DPP spec ID not found in instance variables or config");
 
     const processId = await this.createProcess(`DPP creation for ${params.name}`);
 
@@ -222,8 +222,9 @@ export class ResourceClient {
   }
 
   async getMachines(): Promise<unknown> {
-    const machineSpecId = this.config.specs?.machine;
-    if (!machineSpecId) throw new Error("specs.machine not configured");
+    const vars = await this.getInstanceVars();
+    const machineSpecId = vars.machine?.id || this.config.specs?.machine;
+    if (!machineSpecId) throw new Error("Machine spec ID not found in instance variables or config");
     const res = await this.graphql.request(GQL.QUERY_MACHINES, {
       resourceSpecId: machineSpecId,
     });
