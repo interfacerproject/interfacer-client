@@ -1,24 +1,10 @@
 // @interfacer/client — TypeScript SDK for the Interfacer ecosystem
-//
-// This SDK provides a unified client for:
-// - Zenflows (GraphQL, ValueFlows vocabulary) — authentication, resource CRUD, proposals
-// - DPP (REST) — Digital Product Passport operations
-// - Inbox (REST) — messaging and notifications
-// - Wallet (REST) — idea/strength points
-// - Social (ActivityPub REST) — likes and follows
-//
-// Quick start:
-//   import { InterfacerClient } from "@interfacer/client";
-//   const client = new InterfacerClient({ zenflowsUrl: "https://..." });
-//   await client.auth.login({ email: "..." });
 
 export { InterfacerClient } from "./client";
 
 // Auth
 export { AuthClient } from "./auth/AuthClient";
 export type { UserChallenges } from "./auth/types";
-
-// Crypto types
 export type { Keyring } from "./types/entities";
 
 // Resources
@@ -27,6 +13,8 @@ export type { CreateProjectParams, ProjectFilter } from "./resources/types";
 
 // Files
 export { FileClient } from "./files/FileClient";
+export { prepFileForZenflows, prepFilesForZenflows, formatImageSrc, getResourceImage } from "./files/hashing";
+export type { ZenflowsFile, GqlFile, DppAttachment, ProjectModelMetadata } from "./files/hashing";
 
 // DPP
 export { DppClient } from "./dpp/DppClient";
@@ -43,29 +31,39 @@ export { SocialClient } from "./social/SocialClient";
 
 // Tagging
 export { TaggingClient } from "./tagging/TaggingClient";
+export {
+  slugifyTagValue, prefixedTag, userTag, isUserTag, stripUserTagPrefix,
+  isSystemTag, extractUserTagValues, normalizeUserTagsForSave,
+  monotonicRangeTags, rangeFilterTags, derivedProductFilterTags,
+  mergeTags, removeTagsWithPrefixes,
+} from "./tagging/TaggingClient";
+export {
+  TAG_PREFIX, SYSTEM_TAG_PREFIXES, MANUFACTURABLE_TRUE_TAG,
+  REPAIRABILITY_AVAILABLE_TAG, PRODUCT_CATEGORY_OPTIONS,
+  POWER_COMPATIBILITY_OPTIONS, REPLICABILITY_OPTIONS,
+  SERVICE_TYPE_OPTIONS, AVAILABILITY_OPTIONS,
+  RECYCLABILITY_THRESHOLDS_PCT, POWER_REQUIREMENT_THRESHOLDS_W,
+  ENERGY_THRESHOLDS_KWH, CO2_THRESHOLDS_KG,
+} from "./tagging/constants";
 
 // Import
 export { ImportClient } from "./import/ImportClient";
 
 // Domain types
 export type {
-  Project,
-  ProjectType,
-  ProductFilters,
-  ServiceFilters,
-  License,
-  Contributor,
-  Proposal,
-  MachineRef,
-  MaterialRef,
-  ImageRef,
-  ModelFile,
-  Location,
+  Project, ProjectType, ProductFilters, ServiceFilters, License,
+  Contributor, Proposal, MachineRef, MaterialRef, ImageRef, ModelFile, Location,
 } from "./types/entities";
 
 // Config
 export { createConfig } from "./config/config";
 export type { InterfacerConfig } from "./config/config";
+export { createMemoryStorage } from "./config/storage";
+export type { KeyStorage } from "./config/storage";
 
-// Instance variables cache control
-export { clearInstanceVariablesCache } from "./graphql/instance-variables";
+// GraphQL
+export { GraphQLClient } from "./graphql/GraphQLClient";
+export { clearInstanceVariablesCache, getInstanceVariables } from "./graphql/instance-variables";
+
+// Crypto
+export { signGraphQLRequest, signDidRequest, signFileUpload } from "./crypto/sign";
