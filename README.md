@@ -1,15 +1,15 @@
-# @interfacer/client
+# @dyne/interfacer-client
 
 TypeScript SDK for the [Interfacer](https://interfacer.dyne.org) ecosystem — a unified client for Zenflows, Digital Product Passport (DPP), messaging, points, and social features.
 
 ```bash
-pnpm add @interfacer/client zenroom
+pnpm add @dyne/interfacer-client zenroom
 ```
 
 ## Quick Start
 
 ```typescript
-import { InterfacerClient } from "@interfacer/client";
+import { InterfacerClient } from "@dyne/interfacer-client";
 
 const client = new InterfacerClient({
   zenflowsUrl: "https://proxy.example.com/zenflows/api",
@@ -244,7 +244,7 @@ const isOsh = await client.import.analyzeRepoForOsh("https://github.com/owner/re
 ## Installation
 
 ```bash
-pnpm add @interfacer/client zenroom
+pnpm add @dyne/interfacer-client zenroom
 ```
 
 `zenroom` is a peer dependency (WASM-based crypto VM). The SDK imports it dynamically at runtime.

@@ -1,7 +1,7 @@
 #!/usr/bin/env node --experimental-vm-modules
 
 /**
- * Interfacer Init Data — using @interfacer/client SDK.
+ * Interfacer Init Data — using @dyne/interfacer-client SDK.
  */
 
 import { readFileSync, existsSync, writeFileSync } from "fs";

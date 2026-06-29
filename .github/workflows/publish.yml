@@ -1,0 +1,45 @@
+name: Publish (manual)
+
+# Manual fallback — the primary publish path is .github/workflows/release.yml
+# which runs semantic-release automatically on push to main.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "npm dist-tag (e.g. next, latest)"
+        required: false
+        default: "latest"
+
+jobs:
+  quality-gates:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  publish:
+    needs: quality-gates
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Publish
+        shell: bash
+        run: |
+          echo "Publishing @dyne/interfacer-client with dist-tag: ${{ inputs.tag }}"
+          pnpm publish --tag "${{ inputs.tag }}" --no-git-checks --provenance
+        env:
+          NPM_CONFIG_PROVENANCE: true

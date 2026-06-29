@@ -1,4 +1,4 @@
-// @interfacer/client — TypeScript SDK for the Interfacer ecosystem
+// @dyne/interfacer-client — TypeScript SDK for the Interfacer ecosystem
 
 export { InterfacerClient } from "./client";
 
