@@ -18,7 +18,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        publishCmd: 'npm publish --access public',
+        publishCmd: 'npm publish --provenance --access public',
       },
     ],
     // Create GitHub release with notes
