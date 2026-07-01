@@ -64,6 +64,7 @@ export type { KeyStorage } from "./config/storage";
 // GraphQL
 export { GraphQLClient } from "./graphql/GraphQLClient";
 export { clearInstanceVariablesCache, getInstanceVariables } from "./graphql/instance-variables";
+export type { InstanceVariables } from "./graphql/instance-variables";
 
 // Crypto
 export { signGraphQLRequest, signDidRequest, signFileUpload } from "./crypto/sign";
