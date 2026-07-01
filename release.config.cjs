@@ -7,11 +7,18 @@ module.exports = {
     "@semantic-release/commit-analyzer",
     // Generate release notes from commits
     "@semantic-release/release-notes-generator",
-    // Publish to npm (updates package.json version at release time)
+    // Handle version bump in package.json, but DON'T publish (we handle that via @semantic-release/exec for OIDC)
     [
       "@semantic-release/npm",
       {
-        // npmPublish is true by default; the package is published to npm
+        npmPublish: false,
+      },
+    ],
+    // Publish to npm using pnpm (gets auth from setup-node OIDC)
+    [
+      "@semantic-release/exec",
+      {
+        publishCmd: 'pnpm publish --no-git-checks --provenance --access public',
       },
     ],
     // Create GitHub release with notes
