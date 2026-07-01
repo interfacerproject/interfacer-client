@@ -17,13 +17,13 @@ jobs:
         with:
           fetch-depth: 0 # full history needed for commit analysis
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
           registry-url: "https://registry.npmjs.org"
+
+      - name: Enable pnpm via corepack
+        run: corepack enable && corepack prepare pnpm@9 --activate
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
@@ -32,4 +32,3 @@ jobs:
         run: pnpm exec semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ''
