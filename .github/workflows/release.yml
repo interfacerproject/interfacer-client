@@ -28,24 +28,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
-      - name: Debug OIDC / .npmrc
-        shell: bash
-        run: |
-          echo "=== .npmrc ==="
-          cat ~/.npmrc 2>/dev/null || echo "(no ~/.npmrc)"
-          echo ""
-          echo "=== NODE_AUTH_TOKEN set? ==="
-          [[ -n "$NODE_AUTH_TOKEN" ]] && echo "YES (length: ${#NODE_AUTH_TOKEN})" || echo "NO"
-          echo ""
-          echo "=== npm whoami ==="
-          npm whoami --registry=https://registry.npmjs.org 2>&1 || echo "(failed)"
-          echo ""
-          echo "=== OIDC token from actions ==="
-          curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://registry.npmjs.org" | head -c 500 || echo "(failed)"
-          echo ""
-
       - name: Semantic Release
         run: pnpm exec semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+          NODE_AUTH_TOKEN: ''
