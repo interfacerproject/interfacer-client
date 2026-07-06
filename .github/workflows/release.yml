@@ -29,9 +29,19 @@ jobs:
       - run: pnpm build
 
       - name: Semantic Release
-        run: pnpm exec semantic-release
+        id: release
+        run: |
+          git tag > /tmp/tags-before.txt
+          pnpm exec semantic-release
+          git tag > /tmp/tags-after.txt
+          if ! diff -q /tmp/tags-before.txt /tmp/tags-after.txt > /dev/null; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to npm
+        if: steps.release.outputs.published == 'true'
         run: npm publish --provenance --access public
