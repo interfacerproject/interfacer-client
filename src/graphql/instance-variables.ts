@@ -38,8 +38,8 @@ export interface SpecInfo {
 
 export interface InstanceVariables {
   projectDesign: SpecInfo;
-  projectProduct: SpecInfo;
-  projectService: SpecInfo;
+  projectProduct?: SpecInfo;
+  projectService?: SpecInfo;
   dpp?: SpecInfo;
   machine?: SpecInfo;
   material?: SpecInfo;
@@ -57,8 +57,8 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
       specs: {
         specCurrency: { id: string; name: string };
         specProjectDesign: { id: string; name: string };
-        specProjectProduct: { id: string; name: string };
-        specProjectService: { id: string; name: string };
+        specProjectProduct: { id: string; name: string } | null;
+        specProjectService: { id: string; name: string } | null;
         specDpp?: { id: string; name: string } | null;
         specMachine?: { id: string; name: string } | null;
         specMaterial?: { id: string; name: string } | null;
@@ -78,8 +78,8 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
 
   cachedVars = {
     projectDesign: d.specs.specProjectDesign,
-    projectProduct: d.specs.specProjectProduct,
-    projectService: d.specs.specProjectService,
+    projectProduct: d.specs.specProjectProduct ?? undefined,
+    projectService: d.specs.specProjectService ?? undefined,
     dpp: d.specs.specDpp ?? undefined,
     machine: d.specs.specMachine ?? undefined,
     material: d.specs.specMaterial ?? undefined,

@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { InterfacerClient } from "../client";
 import { createConfig } from "../config/config";
 import { createMemoryStorage } from "../config/storage";
+import { ProjectType } from "../types/entities";
 
 // Load from env (vitest loads .env automatically via Vite)
 const getEnv = (key: string): string => {
@@ -108,7 +109,7 @@ describe("Real backend integration", () => {
 
   it("step 6: create a project (Design)", async () => {
     const project = await client.resources.createProject({
-      projectType: "DESIGN" as const,
+      projectType: ProjectType.DESIGN,
       name: `Test Design ${Date.now()}`,
       note: "Created by SDK integration test",
       tags: ["tag-test"],

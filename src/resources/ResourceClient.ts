@@ -21,6 +21,10 @@ export interface CreateProjectParams {
   license?: string;
   images?: Array<{ name: string; hash: string; mimeType: string; extension: string; size: number }>;
   location?: { name: string; address?: string; lat?: number; lng?: number };
+  /** Pre-created location ID (avoids duplicate location creation) */
+  locationId?: string;
+  /** Pre-created process ID (avoids duplicate process creation) */
+  processId?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -70,8 +74,8 @@ export class ResourceClient {
   private specIdForType(vars: Awaited<ReturnType<typeof getInstanceVariables>>, type: ProjectType): string {
     switch (type) {
       case ProjectType.DESIGN: return vars.projectDesign.id;
-      case ProjectType.PRODUCT: return vars.projectProduct.id;
-      case ProjectType.SERVICE: return vars.projectService.id;
+      case ProjectType.PRODUCT: return vars.projectProduct?.id || this.config.specs?.product || "";
+      case ProjectType.SERVICE: return vars.projectService?.id || this.config.specs?.service || "";
       case ProjectType.MACHINE: return vars.machine?.id || this.config.specs?.machine || "";
       case ProjectType.DPP: return vars.dpp?.id || this.config.specs?.dpp || "";
     }
@@ -113,10 +117,11 @@ export class ResourceClient {
   async createProject(params: CreateProjectParams & { projectType: ProjectType }): Promise<{ id: string; name: string }> {
     const vars = await this.getInstanceVars();
     const specId = this.specIdForType(vars, params.projectType);
-    const processId = await this.createProcess(`creation of ${params.name} by owner`);
+    if (!specId) throw new Error(`${params.projectType} spec ID not found in instance variables or config`);
+    const processId = params.processId || await this.createProcess(`creation of ${params.name} by owner`);
 
-    let locationId: string | undefined;
-    if (params.location) {
+    let locationId: string | undefined = params.locationId;
+    if (!locationId && params.location) {
       const loc = await this.createLocation(params.location);
       locationId = loc.id;
     }

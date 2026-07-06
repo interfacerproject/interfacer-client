@@ -9,10 +9,10 @@
 // ─── Enums ───────────────────────────────────────────────────────────
 
 export enum ProjectType {
-  DESIGN = "DESIGN",
-  PRODUCT = "PRODUCT",
-  SERVICE = "SERVICE",
-  MACHINE = "MACHINE",
+  DESIGN = "Design",
+  PRODUCT = "Product",
+  SERVICE = "Service",
+  MACHINE = "Machine",
   DPP = "DPP",
 }
 

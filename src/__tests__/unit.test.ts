@@ -189,10 +189,10 @@ describe("derivedProductFilterTags", () => {
 
 describe("ProjectType enum", () => {
   it("has all expected values", () => {
-    expect(ProjectType.DESIGN).toBe("DESIGN");
-    expect(ProjectType.PRODUCT).toBe("PRODUCT");
-    expect(ProjectType.SERVICE).toBe("SERVICE");
-    expect(ProjectType.MACHINE).toBe("MACHINE");
+    expect(ProjectType.DESIGN).toBe("Design");
+    expect(ProjectType.PRODUCT).toBe("Product");
+    expect(ProjectType.SERVICE).toBe("Service");
+    expect(ProjectType.MACHINE).toBe("Machine");
     expect(ProjectType.DPP).toBe("DPP");
   });
 });

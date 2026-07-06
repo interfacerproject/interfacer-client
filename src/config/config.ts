@@ -48,6 +48,10 @@ export interface InterfacerConfig {
     machine?: string;
     /** Material spec ID (for material classification) */
     material?: string;
+    /** Product spec ID (for createProject with Product type) */
+    product?: string;
+    /** Service spec ID (for createProject with Service type) */
+    service?: string;
   };
 
   /** Zenflows admin token (needed for sign-up mutations) */
