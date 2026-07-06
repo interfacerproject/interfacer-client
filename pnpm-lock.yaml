@@ -73,8 +73,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.43)
       zenroom:
-        specifier: ^4.0.0
-        version: 4.47.0
+        specifier: ^5.36.1
+        version: 5.36.1
 
 packages:
 
@@ -3542,8 +3542,8 @@ packages:
     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
     engines: {node: '>=18'}
 
-  zenroom@4.47.0:
-    resolution: {integrity: sha512-VENtfCh/uBV9x/W+LjJaL/kivxHwBMAqK/NOrur1KMdAwGe9p5EyZtKDxHZkdtrkoTRqApqViMaWEMye5x2+uQ==}
+  zenroom@5.36.1:
+    resolution: {integrity: sha512-4QHUZ8BtHeiOLJj+OnLCfBRlzNPW+d7jchNhL0YZpIrPdK2rPRTDJKE9vEWBAabKxOyreI859xXh7pKPnrv+GQ==}
 
 snapshots:
 
@@ -7112,4 +7112,4 @@ snapshots:
 
   yoctocolors@2.1.2: {}
 
-  zenroom@4.47.0: {}
+  zenroom@5.36.1: {}
