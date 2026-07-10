@@ -41,7 +41,7 @@ jobs:
           INTERFACER_PROXY_URL=${{ secrets.INTERFACER_PROXY_URL }}
           INTERFACER_LOSH_ID=${{ secrets.INTERFACER_LOSH_ID }}
           INTERFACER_ZENFLOWS_ADMIN=${{ secrets.INTERFACER_ZENFLOWS_ADMIN }}
-          INTERFACER_SPEC_MACHINE=${{ secrets.INTERFACER_SPEC_MACHINES }}
+          INTERFACER_SPEC_MACHINE=${{ secrets.INTERFACER_SPEC_MACHINE }}
           INTERFACER_SPEC_DPP=${{ secrets.INTERFACER_SPEC_DPP }}
           EOF
       - run: pnpm test -- src/__tests__/real-backend.test.ts
