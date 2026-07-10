@@ -35,11 +35,22 @@ jobs:
         run: corepack enable && corepack prepare pnpm@9 --activate
       - run: pnpm install
       - run: pnpm build
+      - name: Debug env vars
+        run: |
+          echo "PROXY_URL set: ${INTERFACER_PROXY_URL:+yes}"
+          echo "LOSH_ID set: ${INTERFACER_LOSH_ID:+yes}"
+          echo "ZENFLOWS_ADMIN set: ${INTERFACER_ZENFLOWS_ADMIN:+yes}"
+          echo "SPEC_MACHINE set: ${INTERFACER_SPEC_MACHINE:+yes}"
+          echo "SPEC_DPP set: ${INTERFACER_SPEC_DPP:+yes}"
+        env:
+          INTERFACER_PROXY_URL: ${{ secrets.INTERFACER_PROXY_URL }}
+          INTERFACER_LOSH_ID: ${{ secrets.INTERFACER_LOSH_ID }}
+          INTERFACER_ZENFLOWS_ADMIN: ${{ secrets.INTERFACER_ZENFLOWS_ADMIN }}
+          INTERFACER_SPEC_MACHINE: ${{ secrets.INTERFACER_SPEC_MACHINES }}
+          INTERFACER_SPEC_DPP: ${{ secrets.INTERFACER_SPEC_DPP }}
       - run: pnpm test -- src/__tests__/real-backend.test.ts
         env:
-          # All service URLs derived from this — only one secret needed for URLs
           INTERFACER_PROXY_URL: ${{ secrets.INTERFACER_PROXY_URL }}
-          # Non-derivable secrets (must be provided individually)
           INTERFACER_LOSH_ID: ${{ secrets.INTERFACER_LOSH_ID }}
           INTERFACER_ZENFLOWS_ADMIN: ${{ secrets.INTERFACER_ZENFLOWS_ADMIN }}
           INTERFACER_SPEC_MACHINE: ${{ secrets.INTERFACER_SPEC_MACHINES }}
