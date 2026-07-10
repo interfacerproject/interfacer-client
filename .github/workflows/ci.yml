@@ -21,7 +21,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm build
-      - run: pnpm test
+      - run: pnpm vitest run src/__tests__/unit.test.ts src/__tests__/integration.test.ts
 
   real-backend:
     runs-on: ubuntu-latest
@@ -35,23 +35,13 @@ jobs:
         run: corepack enable && corepack prepare pnpm@9 --activate
       - run: pnpm install
       - run: pnpm build
-      - name: Debug env vars
+      - name: Write .env from secrets (vitest auto-loads it)
         run: |
-          echo "PROXY_URL set: ${INTERFACER_PROXY_URL:+yes}"
-          echo "LOSH_ID set: ${INTERFACER_LOSH_ID:+yes}"
-          echo "ZENFLOWS_ADMIN set: ${INTERFACER_ZENFLOWS_ADMIN:+yes}"
-          echo "SPEC_MACHINE set: ${INTERFACER_SPEC_MACHINE:+yes}"
-          echo "SPEC_DPP set: ${INTERFACER_SPEC_DPP:+yes}"
-        env:
-          INTERFACER_PROXY_URL: ${{ secrets.INTERFACER_PROXY_URL }}
-          INTERFACER_LOSH_ID: ${{ secrets.INTERFACER_LOSH_ID }}
-          INTERFACER_ZENFLOWS_ADMIN: ${{ secrets.INTERFACER_ZENFLOWS_ADMIN }}
-          INTERFACER_SPEC_MACHINE: ${{ secrets.INTERFACER_SPEC_MACHINES }}
-          INTERFACER_SPEC_DPP: ${{ secrets.INTERFACER_SPEC_DPP }}
+          cat > .env << 'EOF'
+          INTERFACER_PROXY_URL=${{ secrets.INTERFACER_PROXY_URL }}
+          INTERFACER_LOSH_ID=${{ secrets.INTERFACER_LOSH_ID }}
+          INTERFACER_ZENFLOWS_ADMIN=${{ secrets.INTERFACER_ZENFLOWS_ADMIN }}
+          INTERFACER_SPEC_MACHINE=${{ secrets.INTERFACER_SPEC_MACHINES }}
+          INTERFACER_SPEC_DPP=${{ secrets.INTERFACER_SPEC_DPP }}
+          EOF
       - run: pnpm test -- src/__tests__/real-backend.test.ts
-        env:
-          INTERFACER_PROXY_URL: ${{ secrets.INTERFACER_PROXY_URL }}
-          INTERFACER_LOSH_ID: ${{ secrets.INTERFACER_LOSH_ID }}
-          INTERFACER_ZENFLOWS_ADMIN: ${{ secrets.INTERFACER_ZENFLOWS_ADMIN }}
-          INTERFACER_SPEC_MACHINE: ${{ secrets.INTERFACER_SPEC_MACHINES }}
-          INTERFACER_SPEC_DPP: ${{ secrets.INTERFACER_SPEC_DPP }}

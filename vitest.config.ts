@@ -1,7 +1,8 @@
 import { defineConfig } from "vitest/config";
 import dotenv from "dotenv";
 
-// Load .env before test config
+// Load .env into process.env (vitest auto-loads via Vite's loadEnv which
+// only populates import.meta.env, not process.env in Node test context).
 dotenv.config();
 
 export default defineConfig({
