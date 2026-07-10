@@ -126,23 +126,29 @@ export class ResourceClient {
       locationId = loc.id;
     }
 
-    const res = await this.graphql.request<{
-      createEconomicEvent: { economicEvent: { id: string; resourceInventoriedAs: { id: string; name: string } } };
-    }>(GQL.CREATE_PROJECT, {
+    const variables: Record<string, unknown> = {
       name: params.name,
       note: params.note || "",
       metadata: JSON.stringify(params.metadata || {}),
       agent: this.userId,
       creationTime: new Date().toISOString(),
       location: locationId,
-      tags: params.tags || [],
       resourceSpec: specId,
       oneUnit: vars.unitOne,
       images: params.images || [],
       repo: params.repo || "",
       process: processId,
       license: params.license || "",
-    });
+    };
+
+    // Only pass tags if non-empty — empty [] causes backend errors for resourceClassifiedAs
+    if (params.tags && params.tags.length > 0) {
+      variables.tags = params.tags;
+    }
+
+    const res = await this.graphql.request<{
+      createEconomicEvent: { economicEvent: { id: string; resourceInventoriedAs: { id: string; name: string } } };
+    }>(GQL.CREATE_PROJECT, variables);
 
     if (res.errors?.length) throw new Error(`createProject failed: ${res.errors[0]!.message}`);
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
