@@ -22,6 +22,25 @@ const getEnv = (key: string): string => {
 };
 
 function makeConfig() {
+  // All service URLs are derived from the proxy URL (INTERFACER_PROXY_URL).
+  // Only non-derivable secrets need to be provided explicitly.
+  const proxyUrl = process.env["INTERFACER_PROXY_URL"];
+
+  const explicit: Record<string, unknown> = {
+    loshId: getEnv("INTERFACER_LOSH_ID"),
+    zenflowsAdmin: getEnv("INTERFACER_ZENFLOWS_ADMIN"),
+    specs: {
+      machine: getEnv("INTERFACER_SPEC_MACHINE"),
+      dpp: getEnv("INTERFACER_SPEC_DPP"),
+    },
+  };
+
+  // Prefer proxyUrl; fall back to explicit URLs from legacy env vars
+  if (proxyUrl) {
+    return createConfig({ proxyUrl, ...explicit });
+  }
+
+  // Legacy fallback: construct config from individual env vars
   return createConfig({
     zenflowsUrl: getEnv("INTERFACER_ZENFLOWS_URL"),
     zenflowsFileUrl: getEnv("INTERFACER_ZENFLOWS_FILE_URL"),
@@ -38,12 +57,7 @@ function makeConfig() {
       economicResourceBase: getEnv("INTERFACER_SOCIAL_ER"),
     },
     oshUrl: getEnv("INTERFACER_OSH_URL"),
-    loshId: getEnv("INTERFACER_LOSH_ID"),
-    zenflowsAdmin: getEnv("INTERFACER_ZENFLOWS_ADMIN"),
-    specs: {
-      machine: getEnv("INTERFACER_SPEC_MACHINE"),
-      dpp: getEnv("INTERFACER_SPEC_DPP"),
-    },
+    ...explicit,
   });
 }
 

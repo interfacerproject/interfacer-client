@@ -6,11 +6,16 @@
  */
 import { describe, expect, it } from "vitest";
 import { InterfacerClient } from "../client";
-import { createConfig } from "../config/config";
+import { createConfig, deriveEndpointsFromProxy } from "../config/config";
 import { createMemoryStorage } from "../config/storage";
-import { InterfacerConfig } from "../config/config";
+import type { InterfacerConfig } from "../config/config";
 
-const testConfig: InterfacerConfig = createConfig({
+const PROXY_URL = "https://test.example.com";
+
+const testConfig: InterfacerConfig = createConfig({ proxyUrl: PROXY_URL });
+
+// Explicit config for tests that need to verify exact URLs
+const testConfigExplicit: InterfacerConfig = createConfig({
   zenflowsUrl: "https://test.example.com/zenflows/api",
   zenflowsFileUrl: "https://test.example.com/zenflows/api/file",
   dppUrl: "https://test.example.com/interfacer-dpp",
@@ -107,5 +112,81 @@ describe("Config", () => {
     });
 
     expect(config.zenflowsUrl).toBe("https://z.example.com/api");
+  });
+});
+
+describe("Proxy URL derivation", () => {
+  it("deriveEndpointsFromProxy maps all paths correctly", () => {
+    const endpoints = deriveEndpointsFromProxy(PROXY_URL);
+
+    expect(endpoints.zenflowsUrl).toBe(`${PROXY_URL}/zenflows/api`);
+    expect(endpoints.zenflowsFileUrl).toBe(`${PROXY_URL}/zenflows/api/file`);
+    expect(endpoints.dppUrl).toBe(`${PROXY_URL}/interfacer-dpp`);
+    expect(endpoints.inbox.send).toBe(`${PROXY_URL}/inbox/send`);
+    expect(endpoints.inbox.read).toBe(`${PROXY_URL}/inbox/read`);
+    expect(endpoints.inbox.countUnread).toBe(`${PROXY_URL}/inbox/count-unread`);
+    expect(endpoints.inbox.setRead).toBe(`${PROXY_URL}/inbox/set-read`);
+    expect(endpoints.walletUrl).toBe(`${PROXY_URL}/wallet/token`);
+    expect(endpoints.social.personBase).toBe(`${PROXY_URL}/inbox/person`);
+    expect(endpoints.social.economicResourceBase).toBe(`${PROXY_URL}/inbox/economicresource`);
+    expect(endpoints.oshUrl).toBe(`${PROXY_URL}/osh`);
+  });
+
+  it("deriveEndpointsFromProxy strips trailing slash", () => {
+    const endpoints = deriveEndpointsFromProxy(`${PROXY_URL}/`);
+    expect(endpoints.zenflowsUrl).toBe(`${PROXY_URL}/zenflows/api`);
+  });
+
+  it("createConfig with only proxyUrl derives all service URLs", () => {
+    const config = createConfig({ proxyUrl: PROXY_URL });
+
+    expect(config.zenflowsUrl).toBe(`${PROXY_URL}/zenflows/api`);
+    expect(config.zenflowsFileUrl).toBe(`${PROXY_URL}/zenflows/api/file`);
+    expect(config.dppUrl).toBe(`${PROXY_URL}/interfacer-dpp`);
+    expect(config.inbox?.send).toBe(`${PROXY_URL}/inbox/send`);
+    expect(config.inbox?.read).toBe(`${PROXY_URL}/inbox/read`);
+    expect(config.inbox?.countUnread).toBe(`${PROXY_URL}/inbox/count-unread`);
+    expect(config.inbox?.setRead).toBe(`${PROXY_URL}/inbox/set-read`);
+    expect(config.walletUrl).toBe(`${PROXY_URL}/wallet/token`);
+    expect(config.social?.personBase).toBe(`${PROXY_URL}/inbox/person`);
+    expect(config.social?.economicResourceBase).toBe(`${PROXY_URL}/inbox/economicresource`);
+    expect(config.oshUrl).toBe(`${PROXY_URL}/osh`);
+  });
+
+  it("createConfig with proxyUrl + extra fields preserves non-derivable fields", () => {
+    const config = createConfig({
+      proxyUrl: PROXY_URL,
+      loshId: "06EG20F8TN5159QS8VXVAEJ1WR",
+      zenflowsAdmin: "secret-admin-token",
+      specs: { machine: "06DGHXVBGFFMANA12H3WGXSHFC" },
+      walletCycle: { startDate: "2024-01-01", cycleLength: 30 },
+    });
+
+    expect(config.loshId).toBe("06EG20F8TN5159QS8VXVAEJ1WR");
+    expect(config.zenflowsAdmin).toBe("secret-admin-token");
+    expect(config.specs?.machine).toBe("06DGHXVBGFFMANA12H3WGXSHFC");
+    expect(config.walletCycle?.startDate).toBe("2024-01-01");
+    // Service URLs still derived
+    expect(config.zenflowsUrl).toBe(`${PROXY_URL}/zenflows/api`);
+  });
+
+  it("createConfig explicit URL overrides proxy-derived URL", () => {
+    const config = createConfig({
+      proxyUrl: PROXY_URL,
+      zenflowsUrl: "https://custom.example.com/zenflows",
+    });
+
+    expect(config.zenflowsUrl).toBe("https://custom.example.com/zenflows");
+    // Other URLs still derived
+    expect(config.dppUrl).toBe(`${PROXY_URL}/interfacer-dpp`);
+  });
+
+  it("client works with proxy-only config", () => {
+    const config = createConfig({ proxyUrl: PROXY_URL });
+    const client = new InterfacerClient(config);
+
+    expect(client).toBeDefined();
+    expect(client.config.zenflowsUrl).toBe(`${PROXY_URL}/zenflows/api`);
+    expect(client.config.inbox?.send).toBe(`${PROXY_URL}/inbox/send`);
   });
 });

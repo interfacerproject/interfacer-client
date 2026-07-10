@@ -56,8 +56,8 @@ export type {
 } from "./types/entities";
 
 // Config
-export { createConfig } from "./config/config";
-export type { InterfacerConfig } from "./config/config";
+export { createConfig, deriveEndpointsFromProxy } from "./config/config";
+export type { InterfacerConfig, DerivedEndpoints } from "./config/config";
 export { createMemoryStorage } from "./config/storage";
 export type { KeyStorage } from "./config/storage";
 

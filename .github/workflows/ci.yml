@@ -37,17 +37,9 @@ jobs:
       - run: pnpm build
       - run: pnpm test -- src/__tests__/real-backend.test.ts
         env:
-          INTERFACER_ZENFLOWS_URL: ${{ secrets.INTERFACER_ZENFLOWS_URL }}
-          INTERFACER_ZENFLOWS_FILE_URL: ${{ secrets.INTERFACER_ZENFLOWS_FILE_URL }}
-          INTERFACER_DPP_URL: ${{ secrets.INTERFACER_DPP_URL }}
-          INTERFACER_INBOX_SEND: ${{ secrets.INTERFACER_INBOX_SEND }}
-          INTERFACER_INBOX_READ: ${{ secrets.INTERFACER_INBOX_READ }}
-          INTERFACER_INBOX_COUNT_UNREAD: ${{ secrets.INTERFACER_INBOX_COUNT_UNREAD }}
-          INTERFACER_INBOX_SET_READ: ${{ secrets.INTERFACER_INBOX_SET_READ }}
-          INTERFACER_WALLET_URL: ${{ secrets.INTERFACER_WALLET_URL }}
-          INTERFACER_SOCIAL_PERSON: ${{ secrets.INTERFACER_SOCIAL_PERSON }}
-          INTERFACER_SOCIAL_ER: ${{ secrets.INTERFACER_SOCIAL_ER }}
-          INTERFACER_OSH_URL: ${{ secrets.INTERFACER_OSH_URL }}
+          # All service URLs derived from this — only one secret needed for URLs
+          INTERFACER_PROXY_URL: ${{ secrets.INTERFACER_PROXY_URL }}
+          # Non-derivable secrets (must be provided individually)
           INTERFACER_LOSH_ID: ${{ secrets.INTERFACER_LOSH_ID }}
           INTERFACER_ZENFLOWS_ADMIN: ${{ secrets.INTERFACER_ZENFLOWS_ADMIN }}
           INTERFACER_SPEC_MACHINE: ${{ secrets.INTERFACER_SPEC_MACHINE }}

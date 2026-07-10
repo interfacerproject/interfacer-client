@@ -58,7 +58,10 @@ export class GraphQLClient {
       }
     }
 
-    const res = await fetch(this.config.zenflowsUrl, {
+    const url = this.config.zenflowsUrl;
+    if (!url) throw new Error("zenflowsUrl not configured. Provide zenflowsUrl or proxyUrl in config.");
+
+    const res = await fetch(url, {
       method: "POST",
       headers,
       body,
