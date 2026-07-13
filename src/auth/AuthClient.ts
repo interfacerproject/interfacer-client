@@ -25,11 +25,11 @@ import {
 // ─── Email template enum matching Zenflows backend ──────────────────
 
 enum EmailTemplate {
-  InterfacerDeployment = "InterfacerDeployment",
-  InterfacerStaging = "InterfacerStaging",
-  InterfacerTesting = "InterfacerTesting",
-  InterfacerBeta = "InterfacerBeta",
-  InterfacerSelf = "InterfacerSelf",
+  InterfacerDeployment = "INTERFACER_DEPLOYMENT",
+  InterfacerStaging = "INTERFACER_STAGING",
+  InterfacerTesting = "INTERFACER_TESTING",
+  InterfacerBeta = "INTERFACER_BETA",
+  InterfacerSelf = "INTERFACER_SELF",
 }
 
 // ─── Client ─────────────────────────────────────────────────────────
