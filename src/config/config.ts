@@ -60,6 +60,9 @@ export interface InterfacerConfig {
   /** Open Source Hardware analysis endpoint */
   oshUrl?: string;
 
+  /** Feedback service base URL (reviews & comments) */
+  feedbackUrl?: string;
+
   /** Location services */
   location?: {
     autocomplete: string;

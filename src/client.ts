@@ -8,6 +8,7 @@ import { AuthClient } from "./auth/AuthClient";
 import { InterfacerConfig } from "./config/config";
 import { KeyStorage, createLocalStorageAdapter, createMemoryStorage } from "./config/storage";
 import { DppClient } from "./dpp/DppClient";
+import { FeedbackClient } from "./feedback/FeedbackClient";
 import { FileClient } from "./files/FileClient";
 import { GraphQLClient } from "./graphql/GraphQLClient";
 import { ImportClient } from "./import/ImportClient";
@@ -27,6 +28,7 @@ export class InterfacerClient {
   private _resources?: ResourceClient;
   private _files?: FileClient;
   private _dpp?: DppClient;
+  private _feedback?: FeedbackClient;
   private _inbox?: InboxClient;
   private _wallet?: WalletClient;
   private _social?: SocialClient;
@@ -58,6 +60,10 @@ export class InterfacerClient {
 
   get dpp(): DppClient {
     return (this._dpp ??= new DppClient(this.config, this.store));
+  }
+
+  get feedback(): FeedbackClient {
+    return (this._feedback ??= new FeedbackClient(this.config, this.store));
   }
 
   get inbox(): InboxClient {

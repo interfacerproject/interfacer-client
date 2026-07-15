@@ -20,6 +20,13 @@ export type { ZenflowsFile, GqlFile, DppAttachment, ProjectModelMetadata } from 
 export { DppClient } from "./dpp/DppClient";
 export type { DppDocument, DppStatus } from "./dpp/types";
 
+// Feedback
+export { FeedbackClient } from "./feedback/FeedbackClient";
+export type {
+  Review, ReviewSummary, Comment,
+  GetReviewsParams, GetCommentsParams,
+} from "./feedback/FeedbackClient";
+
 // Messaging
 export { InboxClient } from "./messaging/InboxClient";
 
