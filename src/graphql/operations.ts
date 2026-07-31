@@ -82,12 +82,10 @@ export const FETCH_RESOURCES = gql`
         node {
           conformsTo { id name }
           currentLocation { id name mappableAddress lat long }
-          id name classifiedAs note metadata okhv repo license version licensor
+          id name classifiedAs note metadata
           images { hash name mimeType }
-          primaryAccountable { id name note images { bin mimeType } primaryLocation { name } }
-          custodian { id name note }
-          accountingQuantity { hasUnit { id label symbol } hasNumericalValue }
-          onhandQuantity { hasUnit { id label symbol } hasNumericalValue }
+          license
+          primaryAccountable { id name images { mimeType } }
         }
       }
     }
