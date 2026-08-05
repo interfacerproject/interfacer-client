@@ -47,6 +47,22 @@ export interface PaginationParams {
   before?: string;
 }
 
+export type TraceDppNodeType = "EconomicResource" | "EconomicEvent" | "Process" | string;
+
+/** Recursive node returned by Zenflows' traceDpp resolver. */
+export interface TraceDppNode {
+  type: TraceDppNodeType;
+  node: {
+    id?: string;
+    name?: string;
+    note?: string | null;
+    action?: { id?: string; label?: string } | null;
+    metadata?: Record<string, unknown> | null;
+    [key: string]: unknown;
+  };
+  children?: TraceDppNode[];
+}
+
 export type ResourceFilter = Record<string, unknown>;
 export type ProposalFilter = Record<string, unknown>;
 
@@ -415,6 +431,17 @@ export class ResourceClient {
       eventModify: eventsRes.data!.modify.economicEvent.id,
     });
     if (satRes.errors?.length) throw new Error(`satisfyIntents failed: ${satRes.errors[0]!.message}`);
+  }
+
+  async getTraceDpp(id: string): Promise<TraceDppNode[]> {
+    const res = await this.graphql.request<{
+      economicResource: { traceDpp?: unknown } | null;
+    }>(GQL.QUERY_RESOURCE_TRACE_DPP, { id });
+
+    if (res.errors?.length) throw new Error(`getTraceDpp failed: ${res.errors[0]!.message}`);
+
+    const traceDpp = res.data?.economicResource?.traceDpp;
+    return Array.isArray(traceDpp) ? (traceDpp as TraceDppNode[]) : [];
   }
 
   async rejectProposal(intentCite: string, intentAccept: string, intentModify: string): Promise<void> {

@@ -9,6 +9,47 @@ import { gql } from "./gql";
 
 // ─── Instance Variables ────────────────────────────────────────────
 
+export const QUERY_VARIABLES = gql`
+  query GetVariables {
+    instanceVariables {
+      specs {
+        specCurrency { id name }
+        specProjectDesign { id name }
+        specProjectProduct { id name }
+        specProjectService { id name }
+        specDpp { id name }
+        specMachine { id name }
+        specMaterial { id name }
+      }
+      units { unitOne { id } }
+    }
+  }
+`;
+
+export const QUERY_PROJECT_TYPES = gql`
+  query GetProjectTypes {
+    instanceVariables {
+      specs {
+        specProjectDesign { id name }
+        specProjectProduct { id name }
+        specProjectService { id name }
+        specDpp { id name }
+        specMachine { id name }
+        specMaterial { id name }
+      }
+    }
+  }
+`;
+
+export const QUERY_UNIT_AND_CURRENCY = gql`
+  query GetUnitAndCurrency {
+    instanceVariables {
+      units { unitOne { id } }
+      specs { specCurrency { id } }
+    }
+  }
+`;
+
 // ─── Auth ───────────────────────────────────────────────────────────
 
 export const REGISTER_USER = gql`
@@ -54,6 +95,18 @@ export const CLAIM_DID = gql`
   }
 `;
 
+export const PERSON_EXISTS = gql`
+  query PersonExists($email: String, $user: String) {
+    personExists(email: $email, user: $user)
+  }
+`;
+
+export const VERIFY_EMAIL = gql`
+  mutation VerifyEmail($token: String!) {
+    personVerifyEmailVerification(token: $token)
+  }
+`;
+
 // ─── Resources / Projects ───────────────────────────────────────────
 
 export const QUERY_RESOURCE = gql`
@@ -65,7 +118,7 @@ export const QUERY_RESOURCE = gql`
       accountingQuantity { hasUnit { label symbol } hasNumericalValue }
       primaryAccountable { id name }
       currentLocation { id name mappableAddress lat long }
-      images { hash name mimeType bin }
+      images { hash name mimeType }
     }
   }
 `;
@@ -110,7 +163,7 @@ export const QUERY_PROJECTS = gql`
               primaryAccountable { name id }
               name id note metadata
               onhandQuantity { hasUnit { label } }
-              images { hash name mimeType bin }
+              images { hash name mimeType }
             }
           }
           reciprocalIntents {
@@ -158,7 +211,88 @@ export const QUERY_PROJECT_FOR_METADATA_UPDATE = gql`
 export const ASK_RESOURCE_PRIMARY_ACCOUNTABLE = gql`
   query askResourcePrimaryAccountable($id: ID!) {
     economicResource(id: $id) {
-      id name primaryAccountable { id name images { bin mimeType } }
+      id name primaryAccountable { id name }
+    }
+  }
+`;
+
+export const GET_PROJECT_LAYOUT = gql`
+  query getProjectLayout($id: ID!) {
+    economicResource(id: $id) {
+      id name note metadata license licensor repo classifiedAs
+      accountingQuantity { hasNumericalValue }
+      onhandQuantity { hasUnit { id } hasNumericalValue }
+      conformsTo { id name }
+      primaryAccountable {
+        id name
+        primaryLocation { name mappableAddress lat long }
+      }
+      currentLocation { id name mappableAddress lat long }
+      images { hash name mimeType date description extension size }
+    }
+  }
+`;
+
+export const SEARCH_PROJECT = gql`
+  query SearchProject($id: ID!) {
+    economicResource(id: $id) {
+      id name metadata
+      images { hash mimeType }
+      conformsTo { name id }
+      primaryAccountable { name }
+    }
+  }
+`;
+
+export const SEARCH_PROJECTS = gql`
+  query SearchProjects(
+    $last: Int $IDs: [ID!] $name: String
+    $conformsTo: [ID!] $primaryAccountable: [ID!]
+  ) {
+    economicResources(
+      last: $last
+      filter: { id: $IDs, name: $name, conformsTo: $conformsTo, primaryAccountable: $primaryAccountable }
+    ) {
+      edges {
+        node {
+          id name metadata
+          conformsTo { id name }
+          primaryAccountable { id name }
+          images { hash name mimeType }
+        }
+      }
+    }
+  }
+`;
+
+export const SELECT_RESOURCES = gql`
+  query FetchResources($filter: EconomicResourceFilterParams) {
+    economicResources(last: 10, filter: $filter) {
+      edges { cursor node { id name } }
+    }
+  }
+`;
+
+export const EDIT_IMAGES = gql`
+  mutation EditImages($id: ID!, $images: [IFile!]) {
+    updateEconomicResource(resource: { id: $id, images: $images }) {
+      economicResource { id }
+    }
+  }
+`;
+
+export const EDIT_MAIN = gql`
+  mutation EditMain($id: ID!, $classifiedAs: [URI!], $note: String, $name: String, $repo: String) {
+    updateEconomicResource(
+      resource: { id: $id, classifiedAs: $classifiedAs, name: $name, note: $note, repo: $repo }
+    ) { economicResource { id } }
+  }
+`;
+
+export const EDIT_SPECS = gql`
+  mutation EditSpecs($id: ID!, $classifiedAs: [URI!]) {
+    updateEconomicResource(resource: { id: $id, classifiedAs: $classifiedAs }) {
+      economicResource { id }
     }
   }
 `;
@@ -227,7 +361,7 @@ export const QUERY_PROPOSAL = gql`
         id provider { id name } receiver { id name }
         inputOf { name id } outputOf { id name } hasPointInTime
         resourceInventoriedAs {
-          id name repo metadata images { hash name mimeType bin }
+          id name repo metadata images { hash name mimeType }
           primaryAccountable { id name } onhandQuantity { hasNumericalValue hasUnit { id } }
         }
         resourceConformsTo { id name }
@@ -459,6 +593,19 @@ export const UPDATE_RESOURCE_CLASSIFIED_AS = gql`
   }
 `;
 
+export const UPDATE_CONTRIBUTION = gql`
+  mutation updateContribution(
+    $process: ID! $agent: ID! $resource: ID! $quantity: IMeasure!
+    $now: DateTime! $metadata: JSONObject! $conformsTo: ID! $unitOne: ID!
+  ) {
+    contribute: createEconomicEvent(event: {
+      action: "work" inputOf: $process provider: $agent receiver: $agent
+      resourceConformsTo: $conformsTo hasPointInTime: $now
+      effortQuantity: { hasNumericalValue: 1 hasUnit: $unitOne }
+    }) { economicEvent { id } }
+  }
+`;
+
 export const RELOCATE_PROJECT = gql`
   mutation relocateProject(
     $process: ID! $agent: ID! $resource: ID! $quantity: IMeasure! $now: DateTime! $location: ID!
@@ -502,6 +649,66 @@ export const FETCH_USER = gql`
   }
 `;
 
+export const GET_USER_LAYOUT = gql`
+  query GetUserLayout($id: ID!) {
+    person(id: $id) {
+      id name note email user
+      images { hash name mimeType bin size extension description }
+      ethereumAddress
+      primaryLocation { id name mappableAddress lat long }
+    }
+  }
+`;
+
+export const UPDATE_USER = gql`
+  mutation updateUser(
+    $id: ID! $name: String $note: String $primaryLocation: ID $user: String $images: [IFile!]
+  ) {
+    updatePerson(
+      person: { id: $id name: $name note: $note primaryLocation: $primaryLocation user: $user images: $images }
+    ) {
+      agent {
+        id name note
+        images { name }
+        primaryLocation { id lat long name }
+      }
+    }
+  }
+`;
+
+export const GET_USER_IMAGES = gql`
+  query GetUserImages($userId: ID!) {
+    person(id: $userId) {
+      id name
+      images { bin mimeType date description extension hash name size }
+    }
+  }
+`;
+
+export const SEARCH_PERSON = gql`
+  query getPerson($id: ID!) {
+    person(id: $id) {
+      id name user
+      images { bin mimeType }
+      primaryLocation { id name }
+    }
+  }
+`;
+
+export const SEARCH_PEOPLE = gql`
+  query SearchPeople($filter: PersonFilterParams, $last: Int) {
+    people(last: $last, filter: $filter) {
+      edges {
+        node {
+          id name user note
+          images { bin mimeType }
+          primaryLocation { id name }
+        }
+      }
+    }
+  }
+`;
+
 // ─── Tags ───────────────────────────────────────────────────────────
 
 export const GET_TAGS = gql`
@@ -509,6 +716,14 @@ export const GET_TAGS = gql`
     economicResourceClassifications
   }
 `;
+
+export const SEARCH_TAGS = gql`
+  query SearchTags($text: URI!) {
+    economicResourceClassifications(filter: { uri: $text })
+  }
+`;
+
+// ─── Details ────────────────────────────────────────────────────────
 
 export const GET_RESOURCE_DETAILS = gql`
   query GetResourceDetails($id: ID!) {
@@ -519,9 +734,20 @@ export const GET_RESOURCE_DETAILS = gql`
         resourceInventoriedAs {
           conformsTo { name id } currentLocation { name } name id note
           classifiedAs metadata primaryAccountable { name id }
-          onhandQuantity { hasUnit { label } } images { hash name mimeType bin }
+          onhandQuantity { hasUnit { label } } images { hash name mimeType }
         }
       }
+    }
+  }
+`;
+
+// ─── Traceability ───────────────────────────────────────────────────
+
+export const QUERY_RESOURCE_TRACE_DPP = gql`
+  query GetResourceTraceDpp($id: ID!) {
+    economicResource(id: $id) {
+      id
+      traceDpp
     }
   }
 `;
