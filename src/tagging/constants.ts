@@ -22,6 +22,7 @@ export const TAG_PREFIX = {
   AVAILABILITY: "availability",
   LICENSE: "license",
   MANUFACTURABLE: "manufacturable",
+  COMPLEXITY: "complexity",
 } as const;
 
 export type TagPrefix = (typeof TAG_PREFIX)[keyof typeof TAG_PREFIX];
@@ -42,6 +43,7 @@ export const SYSTEM_TAG_PREFIXES: ReadonlyArray<string> = [
   TAG_PREFIX.AVAILABILITY,
   TAG_PREFIX.LICENSE,
   TAG_PREFIX.MANUFACTURABLE,
+  TAG_PREFIX.COMPLEXITY,
 ];
 
 // Legacy/stale system prefixes still appearing in historical data
@@ -82,6 +84,8 @@ export const POWER_COMPATIBILITY_OPTIONS = [
 ] as const;
 
 export const REPLICABILITY_OPTIONS = ["High", "Medium", "Low"] as const;
+
+export const COMPLEXITY_OPTIONS = ["Beginner", "Intermediate", "Advanced"] as const;
 
 export const SERVICE_TYPE_OPTIONS = ["Fabrication", "Learning & Education", "Space Access"] as const;
 

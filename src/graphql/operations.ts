@@ -453,13 +453,14 @@ export const CREATE_PROJECT = gql`
 export const CREATE_MACHINE_RESOURCE = gql`
   mutation createMachineResource(
     $agent: ID! $creationTime: DateTime! $process: ID! $resourceSpec: ID!
-    $unitOne: ID! $name: String! $note: String $metadata: JSONObject
+    $unitOne: ID! $name: String! $note: String $metadata: JSONObject $tags: [URI!]
   ) {
     createEconomicEvent(
       event: {
         action: "produce" outputOf: $process provider: $agent receiver: $agent
         hasPointInTime: $creationTime resourceConformsTo: $resourceSpec
         resourceQuantity: { hasNumericalValue: 1 hasUnit: $unitOne } resourceMetadata: $metadata
+        resourceClassifiedAs: $tags
       }
       newInventoriedResource: { name: $name note: $note }
     ) {

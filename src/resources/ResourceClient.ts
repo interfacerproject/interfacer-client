@@ -9,6 +9,8 @@ import { KeyStorage } from "../config/storage";
 import { getInstanceVariables } from "../graphql/instance-variables";
 import { GraphQLClient } from "../graphql/GraphQLClient";
 import * as GQL from "../graphql/operations";
+import { prefixedTag } from "../tagging/TaggingClient";
+import { TAG_PREFIX } from "../tagging/constants";
 import { ProjectType } from "../types/entities";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -30,7 +32,15 @@ export interface CreateProjectParams {
 
 export interface CreateMachineParams {
   name: string;
+  /** Machine type, e.g. "3D Printer". Stored as a machine-<slug> tag + metadata. */
+  type?: string;
+  /** Optional location label (stored in metadata). */
+  location?: string;
+  /** Short description. */
   note?: string;
+  /** Optional image URL (stored in metadata). */
+  image?: string;
+  tags?: string[];
   metadata?: Record<string, unknown>;
 }
 
@@ -179,9 +189,22 @@ export class ResourceClient {
 
     const processId = await this.createProcess(`creation of machine ${params.name}`);
 
-    const res = await this.graphql.request<{
-      createEconomicEvent: { economicEvent: { resourceInventoriedAs: { id: string; name: string } } };
-    }>(GQL.CREATE_MACHINE_RESOURCE, {
+    // Merge prototype fields (type / location / image) into metadata.
+    const metadata: Record<string, unknown> = {
+      ...(params.type && { machineType: params.type }),
+      ...(params.location && { location: params.location }),
+      ...(params.image && { image: params.image }),
+      ...(params.metadata || {}),
+    };
+
+    // Machine type tag enables filtering by machine.
+    const tags: string[] = [...(params.tags || [])];
+    if (params.type) {
+      const typeTag = prefixedTag(TAG_PREFIX.MACHINE, params.type);
+      if (typeTag) tags.push(typeTag);
+    }
+
+    const variables: Record<string, unknown> = {
       agent: this.userId,
       creationTime: new Date().toISOString(),
       process: processId,
@@ -189,8 +212,13 @@ export class ResourceClient {
       unitOne: vars.unitOne,
       name: params.name,
       note: params.note || "",
-      metadata: JSON.stringify(params.metadata || {}),
-    });
+      metadata: JSON.stringify(metadata),
+    };
+    if (tags.length > 0) variables.tags = tags;
+
+    const res = await this.graphql.request<{
+      createEconomicEvent: { economicEvent: { resourceInventoriedAs: { id: string; name: string } } };
+    }>(GQL.CREATE_MACHINE_RESOURCE, variables);
 
     if (res.errors?.length) throw new Error(`createMachine failed: ${res.errors[0]!.message}`);
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
