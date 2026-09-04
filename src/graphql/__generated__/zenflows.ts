@@ -3652,6 +3652,21 @@ export type GetInstanceVariablesQueryVariables = Exact<{ [key: string]: never; }
 
 export type GetInstanceVariablesQuery = { instanceVariables: { specs: { specCurrency: { id: string, name: string }, specProjectDesign: { id: string, name: string }, specProjectProduct: { id: string, name: string }, specProjectService: { id: string, name: string }, specDpp: { id: string, name: string }, specMachine: { id: string, name: string }, specMaterial: { id: string, name: string } }, units: { unitOne: { id: string } } } };
 
+export type GetVariablesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetVariablesQuery = { instanceVariables: { specs: { specCurrency: { id: string, name: string }, specProjectDesign: { id: string, name: string }, specProjectProduct: { id: string, name: string }, specProjectService: { id: string, name: string }, specDpp: { id: string, name: string }, specMachine: { id: string, name: string }, specMaterial: { id: string, name: string } }, units: { unitOne: { id: string } } } };
+
+export type GetProjectTypesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetProjectTypesQuery = { instanceVariables: { specs: { specProjectDesign: { id: string, name: string }, specProjectProduct: { id: string, name: string }, specProjectService: { id: string, name: string }, specDpp: { id: string, name: string }, specMachine: { id: string, name: string }, specMaterial: { id: string, name: string } } } };
+
+export type GetUnitAndCurrencyQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetUnitAndCurrencyQuery = { instanceVariables: { units: { unitOne: { id: string } }, specs: { specCurrency: { id: string } } } };
+
 export type RegisterUserMutationVariables = Exact<{
   firstRegistration: Scalars['Boolean']['input'];
   userData: Scalars['JSONObject']['input'];
@@ -3696,12 +3711,27 @@ export type ClaimDidMutationVariables = Exact<{
 
 export type ClaimDidMutation = { claimPerson: any };
 
+export type PersonExistsQueryVariables = Exact<{
+  email: InputMaybe<Scalars['String']['input']>;
+  user: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type PersonExistsQuery = { personExists: boolean };
+
+export type VerifyEmailMutationVariables = Exact<{
+  token: Scalars['String']['input'];
+}>;
+
+
+export type VerifyEmailMutation = { personVerifyEmailVerification: boolean };
+
 export type GetResourceTableQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetResourceTableQuery = { economicResource: { id: string, name: string, note: string | null, metadata: any | null, license: string | null, repo: string | null, classifiedAs: Array<any> | null, conformsTo: { id: string, name: string }, onhandQuantity: { hasNumericalValue: any, hasUnit: { id: string, symbol: string, label: string } | null }, accountingQuantity: { hasNumericalValue: any, hasUnit: { label: string, symbol: string } | null }, primaryAccountable: { id: string, name: string } | { id: string, name: string }, currentLocation: { id: string, name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null, images: Array<{ hash: any, name: string, mimeType: string, bin: any | null }> | null } | null };
+export type GetResourceTableQuery = { economicResource: { id: string, name: string, note: string | null, metadata: any | null, license: string | null, repo: string | null, classifiedAs: Array<any> | null, conformsTo: { id: string, name: string }, onhandQuantity: { hasNumericalValue: any, hasUnit: { id: string, symbol: string, label: string } | null }, accountingQuantity: { hasNumericalValue: any, hasUnit: { label: string, symbol: string } | null }, primaryAccountable: { id: string, name: string } | { id: string, name: string }, currentLocation: { id: string, name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null, images: Array<{ hash: any, name: string, mimeType: string }> | null } | null };
 
 export type FetchInventoryQueryVariables = Exact<{
   first: InputMaybe<Scalars['Int']['input']>;
@@ -3712,7 +3742,7 @@ export type FetchInventoryQueryVariables = Exact<{
 }>;
 
 
-export type FetchInventoryQuery = { economicResources: { pageInfo: { startCursor: string | null, endCursor: string | null, hasPreviousPage: boolean, hasNextPage: boolean, totalCount: number | null, pageLimit: number | null }, edges: Array<{ cursor: string, node: { id: string, name: string, classifiedAs: Array<any> | null, note: string | null, metadata: any | null, okhv: string | null, repo: string | null, license: string | null, version: string | null, licensor: string | null, conformsTo: { id: string, name: string }, currentLocation: { id: string, name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null, images: Array<{ hash: any, name: string, mimeType: string }> | null, primaryAccountable: { id: string, name: string, note: string | null, images: Array<{ bin: any | null, mimeType: string }> | null, primaryLocation: { name: string } | null } | { id: string, name: string, note: string | null, images: Array<{ bin: any | null, mimeType: string }> | null, primaryLocation: { name: string } | null }, custodian: { id: string, name: string, note: string | null } | { id: string, name: string, note: string | null }, accountingQuantity: { hasNumericalValue: any, hasUnit: { id: string, label: string, symbol: string } | null }, onhandQuantity: { hasNumericalValue: any, hasUnit: { id: string, label: string, symbol: string } | null } } }> } | null };
+export type FetchInventoryQuery = { economicResources: { pageInfo: { startCursor: string | null, endCursor: string | null, hasPreviousPage: boolean, hasNextPage: boolean, totalCount: number | null, pageLimit: number | null, distinctPrimaryAccountableCount: number | null }, edges: Array<{ cursor: string, node: { id: string, name: string, classifiedAs: Array<any> | null, note: string | null, metadata: any | null, license: string | null, conformsTo: { id: string, name: string }, currentLocation: { id: string, name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null, images: Array<{ hash: any, name: string, mimeType: string }> | null, primaryAccountable: { id: string, name: string, images: Array<{ mimeType: string }> | null } | { id: string, name: string, images: Array<{ mimeType: string }> | null } } }> } | null };
 
 export type GetProjectsQueryVariables = Exact<{
   first: InputMaybe<Scalars['Int']['input']>;
@@ -3723,7 +3753,7 @@ export type GetProjectsQueryVariables = Exact<{
 }>;
 
 
-export type GetProjectsQuery = { proposals: { pageInfo: { startCursor: string | null, endCursor: string | null, hasPreviousPage: boolean, hasNextPage: boolean, totalCount: number | null, pageLimit: number | null }, edges: Array<{ cursor: string, node: { id: string, name: string | null, created: any, primaryIntents: Array<{ resourceClassifiedAs: Array<any> | null, hasPointInTime: any | null, hasBeginning: any | null, hasEnd: any | null, action: { id: string }, resourceInventoriedAs: { classifiedAs: Array<any> | null, name: string, id: string, note: string | null, metadata: any | null, conformsTo: { name: string }, primaryAccountable: { name: string, id: string } | { name: string, id: string }, onhandQuantity: { hasUnit: { label: string } | null }, images: Array<{ hash: any, name: string, mimeType: string, bin: any | null }> | null } | null }> | null, reciprocalIntents: Array<{ resourceQuantity: { hasNumericalValue: any, hasUnit: { label: string, symbol: string } | null } | null }> | null } }> } };
+export type GetProjectsQuery = { proposals: { pageInfo: { startCursor: string | null, endCursor: string | null, hasPreviousPage: boolean, hasNextPage: boolean, totalCount: number | null, pageLimit: number | null }, edges: Array<{ cursor: string, node: { id: string, name: string | null, created: any, primaryIntents: Array<{ resourceClassifiedAs: Array<any> | null, hasPointInTime: any | null, hasBeginning: any | null, hasEnd: any | null, action: { id: string }, resourceInventoriedAs: { classifiedAs: Array<any> | null, name: string, id: string, note: string | null, metadata: any | null, conformsTo: { name: string }, primaryAccountable: { name: string, id: string } | { name: string, id: string }, onhandQuantity: { hasUnit: { label: string } | null }, images: Array<{ hash: any, name: string, mimeType: string }> | null } | null }> | null, reciprocalIntents: Array<{ resourceQuantity: { hasNumericalValue: any, hasUnit: { label: string, symbol: string } | null } | null }> | null } }> } };
 
 export type GetMachinesQueryVariables = Exact<{
   resourceSpecId: Scalars['ID']['input'];
@@ -3751,7 +3781,66 @@ export type AskResourcePrimaryAccountableQueryVariables = Exact<{
 }>;
 
 
-export type AskResourcePrimaryAccountableQuery = { economicResource: { id: string, name: string, primaryAccountable: { id: string, name: string, images: Array<{ bin: any | null, mimeType: string }> | null } | { id: string, name: string, images: Array<{ bin: any | null, mimeType: string }> | null } } | null };
+export type AskResourcePrimaryAccountableQuery = { economicResource: { id: string, name: string, primaryAccountable: { id: string, name: string } | { id: string, name: string } } | null };
+
+export type GetProjectLayoutQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetProjectLayoutQuery = { economicResource: { id: string, name: string, note: string | null, metadata: any | null, license: string | null, licensor: string | null, repo: string | null, classifiedAs: Array<any> | null, accountingQuantity: { hasNumericalValue: any }, onhandQuantity: { hasNumericalValue: any, hasUnit: { id: string } | null }, conformsTo: { id: string, name: string }, primaryAccountable: { id: string, name: string, primaryLocation: { name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null } | { id: string, name: string, primaryLocation: { name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null }, currentLocation: { id: string, name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null, images: Array<{ hash: any, name: string, mimeType: string, date: any, description: string, extension: string, size: number }> | null } | null };
+
+export type SearchProjectQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type SearchProjectQuery = { economicResource: { id: string, name: string, metadata: any | null, images: Array<{ hash: any, mimeType: string }> | null, conformsTo: { name: string, id: string }, primaryAccountable: { name: string } | { name: string } } | null };
+
+export type SearchProjectsQueryVariables = Exact<{
+  last: InputMaybe<Scalars['Int']['input']>;
+  IDs: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  name: InputMaybe<Scalars['String']['input']>;
+  conformsTo: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+  primaryAccountable: InputMaybe<Array<Scalars['ID']['input']> | Scalars['ID']['input']>;
+}>;
+
+
+export type SearchProjectsQuery = { economicResources: { edges: Array<{ node: { id: string, name: string, metadata: any | null, conformsTo: { id: string, name: string }, primaryAccountable: { id: string, name: string } | { id: string, name: string }, images: Array<{ hash: any, name: string, mimeType: string }> | null } }> } | null };
+
+export type FetchResourcesQueryVariables = Exact<{
+  filter: InputMaybe<EconomicResourceFilterParams>;
+}>;
+
+
+export type FetchResourcesQuery = { economicResources: { edges: Array<{ cursor: string, node: { id: string, name: string } }> } | null };
+
+export type EditImagesMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  images: InputMaybe<Array<IFile> | IFile>;
+}>;
+
+
+export type EditImagesMutation = { updateEconomicResource: { economicResource: { id: string } } };
+
+export type EditMainMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  classifiedAs: InputMaybe<Array<Scalars['URI']['input']> | Scalars['URI']['input']>;
+  note: InputMaybe<Scalars['String']['input']>;
+  name: InputMaybe<Scalars['String']['input']>;
+  repo: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type EditMainMutation = { updateEconomicResource: { economicResource: { id: string } } };
+
+export type EditSpecsMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  classifiedAs: InputMaybe<Array<Scalars['URI']['input']> | Scalars['URI']['input']>;
+}>;
+
+
+export type EditSpecsMutation = { updateEconomicResource: { economicResource: { id: string } } };
 
 export type CreateProposalMutationVariables = Exact<{
   name: Scalars['String']['input'];
@@ -3809,7 +3898,7 @@ export type QueryProposalQueryVariables = Exact<{
 }>;
 
 
-export type QueryProposalQuery = { proposal: { id: string, name: string | null, note: string | null, status: ProposedStatus, primaryIntents: Array<{ id: string, hasPointInTime: any | null, provider: { id: string, name: string } | { id: string, name: string } | null, receiver: { id: string, name: string } | { id: string, name: string } | null, inputOf: { name: string, id: string } | null, outputOf: { id: string, name: string } | null, resourceInventoriedAs: { id: string, name: string, repo: string | null, metadata: any | null, images: Array<{ hash: any, name: string, mimeType: string, bin: any | null }> | null, primaryAccountable: { id: string, name: string } | { id: string, name: string }, onhandQuantity: { hasNumericalValue: any, hasUnit: { id: string } | null } } | null, resourceConformsTo: { id: string, name: string } | null }> | null } | null };
+export type QueryProposalQuery = { proposal: { id: string, name: string | null, note: string | null, status: ProposedStatus, primaryIntents: Array<{ id: string, hasPointInTime: any | null, provider: { id: string, name: string } | { id: string, name: string } | null, receiver: { id: string, name: string } | { id: string, name: string } | null, inputOf: { name: string, id: string } | null, outputOf: { id: string, name: string } | null, resourceInventoriedAs: { id: string, name: string, repo: string | null, metadata: any | null, images: Array<{ hash: any, name: string, mimeType: string }> | null, primaryAccountable: { id: string, name: string } | { id: string, name: string }, onhandQuantity: { hasNumericalValue: any, hasUnit: { id: string } | null } } | null, resourceConformsTo: { id: string, name: string } | null }> | null } | null };
 
 export type ResourceProposalsQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -3882,6 +3971,7 @@ export type CreateMachineResourceMutationVariables = Exact<{
   name: Scalars['String']['input'];
   note: InputMaybe<Scalars['String']['input']>;
   metadata: InputMaybe<Scalars['JSONObject']['input']>;
+  tags: InputMaybe<Array<Scalars['URI']['input']> | Scalars['URI']['input']>;
 }>;
 
 
@@ -4004,6 +4094,20 @@ export type UpdateResourceClassifiedAsMutationVariables = Exact<{
 
 export type UpdateResourceClassifiedAsMutation = { updateEconomicResource: { economicResource: { id: string } } };
 
+export type UpdateContributionMutationVariables = Exact<{
+  process: Scalars['ID']['input'];
+  agent: Scalars['ID']['input'];
+  resource: Scalars['ID']['input'];
+  quantity: IMeasure;
+  now: Scalars['DateTime']['input'];
+  metadata: Scalars['JSONObject']['input'];
+  conformsTo: Scalars['ID']['input'];
+  unitOne: Scalars['ID']['input'];
+}>;
+
+
+export type UpdateContributionMutation = { contribute: { economicEvent: { id: string } } };
+
 export type RelocateProjectMutationVariables = Exact<{
   process: Scalars['ID']['input'];
   agent: Scalars['ID']['input'];
@@ -4039,14 +4143,69 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { person: { id: string, name: string, email: string, user: string, ethereumAddress: string | null, primaryLocation: { name: string, mappableAddress: string | null } | null } | null };
 
+export type GetUserLayoutQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetUserLayoutQuery = { person: { id: string, name: string, note: string | null, email: string, user: string, ethereumAddress: string | null, images: Array<{ hash: any, name: string, mimeType: string, bin: any | null, size: number, extension: string, description: string }> | null, primaryLocation: { id: string, name: string, mappableAddress: string | null, lat: any | null, long: any | null } | null } | null };
+
+export type UpdateUserMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  name: InputMaybe<Scalars['String']['input']>;
+  note: InputMaybe<Scalars['String']['input']>;
+  primaryLocation: InputMaybe<Scalars['ID']['input']>;
+  user: InputMaybe<Scalars['String']['input']>;
+  images: InputMaybe<Array<IFile> | IFile>;
+}>;
+
+
+export type UpdateUserMutation = { updatePerson: { agent: { id: string, name: string, note: string | null, images: Array<{ name: string }> | null, primaryLocation: { id: string, lat: any | null, long: any | null, name: string } | null } } };
+
+export type GetUserImagesQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type GetUserImagesQuery = { person: { id: string, name: string, images: Array<{ bin: any | null, mimeType: string, date: any, description: string, extension: string, hash: any, name: string, size: number }> | null } | null };
+
+export type GetPersonQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetPersonQuery = { person: { id: string, name: string, user: string, images: Array<{ bin: any | null, mimeType: string }> | null, primaryLocation: { id: string, name: string } | null } | null };
+
+export type SearchPeopleQueryVariables = Exact<{
+  filter: InputMaybe<PersonFilterParams>;
+  last: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type SearchPeopleQuery = { people: { edges: Array<{ node: { id: string, name: string, user: string, note: string | null, images: Array<{ bin: any | null, mimeType: string }> | null, primaryLocation: { id: string, name: string } | null } }> } | null };
+
 export type GetTagsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetTagsQuery = { economicResourceClassifications: Array<any> | null };
+
+export type SearchTagsQueryVariables = Exact<{
+  text: Scalars['URI']['input'];
+}>;
+
+
+export type SearchTagsQuery = { economicResourceClassifications: Array<any> | null };
 
 export type GetResourceDetailsQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetResourceDetailsQuery = { proposal: { created: any, primaryIntents: Array<{ hasPointInTime: any | null, resourceInventoriedAs: { name: string, id: string, note: string | null, classifiedAs: Array<any> | null, metadata: any | null, conformsTo: { name: string, id: string }, currentLocation: { name: string } | null, primaryAccountable: { name: string, id: string } | { name: string, id: string }, onhandQuantity: { hasUnit: { label: string } | null }, images: Array<{ hash: any, name: string, mimeType: string, bin: any | null }> | null } | null }> | null } | null };
+export type GetResourceDetailsQuery = { proposal: { created: any, primaryIntents: Array<{ hasPointInTime: any | null, resourceInventoriedAs: { name: string, id: string, note: string | null, classifiedAs: Array<any> | null, metadata: any | null, conformsTo: { name: string, id: string }, currentLocation: { name: string } | null, primaryAccountable: { name: string, id: string } | { name: string, id: string }, onhandQuantity: { hasUnit: { label: string } | null }, images: Array<{ hash: any, name: string, mimeType: string }> | null } | null }> | null } | null };
+
+export type GetResourceTraceDppQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetResourceTraceDppQuery = { economicResource: { id: string, traceDpp: any } | null };

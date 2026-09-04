@@ -129,7 +129,7 @@ export const FETCH_RESOURCES = gql`
     $filter: EconomicResourceFilterParams
   ) {
     economicResources(first: $first after: $after before: $before last: $last filter: $filter) {
-      pageInfo { startCursor endCursor hasPreviousPage hasNextPage totalCount pageLimit }
+      pageInfo { startCursor endCursor hasPreviousPage hasNextPage totalCount pageLimit distinctPrimaryAccountableCount }
       edges {
         cursor
         node {
