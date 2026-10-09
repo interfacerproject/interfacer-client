@@ -71,6 +71,8 @@ export type { KeyStorage } from "./config/storage";
 
 // GraphQL
 export { GraphQLClient } from "./graphql/GraphQLClient";
+export { GraphQLRequestError, GraphQLSigningError, throwIfGraphQLErrors } from "./graphql/errors";
+export type { GraphQLError, GraphQLResult } from "./graphql/errors";
 export * from "./graphql/operations";
 export { clearInstanceVariablesCache, getInstanceVariables } from "./graphql/instance-variables";
 export type { InstanceVariables } from "./graphql/instance-variables";
