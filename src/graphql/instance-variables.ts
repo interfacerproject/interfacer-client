@@ -11,6 +11,7 @@
 
 import { gql } from "./gql";
 import { GraphQLClient } from "../graphql/GraphQLClient";
+import { GraphQLRequestError } from "./errors";
 
 const QUERY_INSTANCE_VARIABLES = gql`
   query GetInstanceVariables {
@@ -70,7 +71,7 @@ export async function getInstanceVariables(client: GraphQLClient): Promise<Insta
   }>(QUERY_INSTANCE_VARIABLES);
 
   if (res.errors?.length) {
-    throw new Error(`Failed to fetch instance variables: ${res.errors[0]!.message}`);
+    throw new GraphQLRequestError(res.errors, "Failed to fetch instance variables");
   }
 
   const d = res.data?.instanceVariables;
