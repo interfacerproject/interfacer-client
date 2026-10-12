@@ -8,6 +8,7 @@ import { InterfacerConfig } from "../config/config";
 import { KeyStorage } from "../config/storage";
 import { getInstanceVariables } from "../graphql/instance-variables";
 import { GraphQLClient } from "../graphql/GraphQLClient";
+import { GraphQLRequestError } from "../graphql/errors";
 import * as GQL from "../graphql/operations";
 import { prefixedTag } from "../tagging/TaggingClient";
 import { TAG_PREFIX } from "../tagging/constants";
@@ -114,7 +115,7 @@ export class ResourceClient {
       GQL.CREATE_PROCESS,
       { name }
     );
-    if (res.errors?.length) throw new Error(`createProcess failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createProcess failed");
     return res.data!.createProcess.process.id;
   }
 
@@ -134,7 +135,7 @@ export class ResourceClient {
       lat: params.lat || 0,
       lng: params.lng || 0,
     });
-    if (res.errors?.length) throw new Error(`createLocation failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createLocation failed");
     return res.data!.createSpatialThing.spatialThing;
   }
 
@@ -176,7 +177,7 @@ export class ResourceClient {
       createEconomicEvent: { economicEvent: { id: string; resourceInventoriedAs: { id: string; name: string } } };
     }>(GQL.CREATE_PROJECT, variables);
 
-    if (res.errors?.length) throw new Error(`createProject failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createProject failed");
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
   }
 
@@ -220,7 +221,7 @@ export class ResourceClient {
       createEconomicEvent: { economicEvent: { resourceInventoriedAs: { id: string; name: string } } };
     }>(GQL.CREATE_MACHINE_RESOURCE, variables);
 
-    if (res.errors?.length) throw new Error(`createMachine failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createMachine failed");
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
   }
 
@@ -246,7 +247,7 @@ export class ResourceClient {
       note: params.note || "",
     });
 
-    if (res.errors?.length) throw new Error(`createDppResource failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createDppResource failed");
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
   }
 
@@ -257,6 +258,7 @@ export class ResourceClient {
       GQL.QUERY_RESOURCE,
       { id }
     );
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getResource failed");
     return res.data?.economicResource ?? null;
   }
 
@@ -265,6 +267,7 @@ export class ResourceClient {
       ...pagination,
       filter: filter || {},
     });
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "listResources failed");
     return res.data || {};
   }
 
@@ -273,6 +276,7 @@ export class ResourceClient {
       ...pagination,
       filter: filter || {},
     });
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getProjects failed");
     return res.data || {};
   }
 
@@ -283,6 +287,7 @@ export class ResourceClient {
     const res = await this.graphql.request(GQL.QUERY_MACHINES, {
       resourceSpecId: machineSpecId,
     });
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getMachines failed");
     return res.data || {};
   }
 
@@ -297,7 +302,7 @@ export class ResourceClient {
       process: processId,
       unitOne: vars.unitOne,
     });
-    if (res.errors?.length) throw new Error(`citeResource failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "citeResource failed");
   }
 
   async consumeResource(resourceId: string, processId: string): Promise<void> {
@@ -309,7 +314,7 @@ export class ResourceClient {
       process: processId,
       unitOne: vars.unitOne,
     });
-    if (res.errors?.length) throw new Error(`consumeResource failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "consumeResource failed");
   }
 
   async contributeToResource(processId: string, contributionTypeSpecId: string): Promise<void> {
@@ -321,7 +326,7 @@ export class ResourceClient {
       unitOne: vars.unitOne,
       conformsTo: contributionTypeSpecId,
     });
-    if (res.errors?.length) throw new Error(`contribute failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "contribute failed");
   }
 
   // ─── Metadata ──────────────────────────────────────────────────────
@@ -339,7 +344,7 @@ export class ResourceClient {
       now: new Date().toISOString(),
       metadata: JSON.stringify(metadata),
     });
-    if (res.errors?.length) throw new Error(`updateMetadata failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "updateMetadata failed");
   }
 
   async updateClassifiedAs(resourceId: string, tags: string[]): Promise<void> {
@@ -347,7 +352,7 @@ export class ResourceClient {
       id: resourceId,
       classifiedAs: tags,
     });
-    if (res.errors?.length) throw new Error(`updateClassifiedAs failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "updateClassifiedAs failed");
   }
 
   async relocateResource(resourceId: string, locationId: string): Promise<void> {
@@ -360,7 +365,7 @@ export class ResourceClient {
       now: new Date().toISOString(),
       location: locationId,
     });
-    if (res.errors?.length) throw new Error(`relocate failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "relocate failed");
   }
 
   // ─── Proposals ─────────────────────────────────────────────────────
@@ -389,7 +394,7 @@ export class ResourceClient {
       unitOne: vars.unitOne,
       resourceOrigin: params.resourceOriginId,
     });
-    if (intentsRes.errors?.length) throw new Error(`proposeContribution intents failed: ${intentsRes.errors[0]!.message}`);
+    if (intentsRes.errors?.length) throw new GraphQLRequestError(intentsRes.errors, "proposeContribution intents failed");
 
     // Create proposal
     const proposalRes = await this.graphql.request<{
@@ -398,7 +403,7 @@ export class ResourceClient {
       name: `Contribution to resource`,
       note: params.note,
     });
-    if (proposalRes.errors?.length) throw new Error(`createProposal failed: ${proposalRes.errors[0]!.message}`);
+    if (proposalRes.errors?.length) throw new GraphQLRequestError(proposalRes.errors, "createProposal failed");
 
     const proposalId = proposalRes.data!.createProposal.proposal.id;
     const citeIntentId = intentsRes.data!.citeResourceForked.intent.id;
@@ -412,7 +417,7 @@ export class ResourceClient {
       acceptIntent: acceptIntentId,
       modifyIntent: modifyIntentId,
     });
-    if (linkRes.errors?.length) throw new Error(`linkIntents failed: ${linkRes.errors[0]!.message}`);
+    if (linkRes.errors?.length) throw new GraphQLRequestError(linkRes.errors, "linkIntents failed");
 
     return { proposalId, citeIntentId, acceptIntentId, modifyIntentId };
   }
@@ -446,7 +451,7 @@ export class ResourceClient {
       creationTime: new Date().toISOString(),
       metadata: JSON.stringify(params.newMetadata),
     });
-    if (eventsRes.errors?.length) throw new Error(`acceptProposal events failed: ${eventsRes.errors[0]!.message}`);
+    if (eventsRes.errors?.length) throw new GraphQLRequestError(eventsRes.errors, "acceptProposal events failed");
 
     // Satisfy intents
     const satRes = await this.graphql.request(GQL.SATISFY_INTENTS, {
@@ -458,7 +463,7 @@ export class ResourceClient {
       eventAccept: eventsRes.data!.accept.economicEvent.id,
       eventModify: eventsRes.data!.modify.economicEvent.id,
     });
-    if (satRes.errors?.length) throw new Error(`satisfyIntents failed: ${satRes.errors[0]!.message}`);
+    if (satRes.errors?.length) throw new GraphQLRequestError(satRes.errors, "satisfyIntents failed");
   }
 
   async getTraceDpp(id: string): Promise<TraceDppNode[]> {
@@ -466,7 +471,7 @@ export class ResourceClient {
       economicResource: { traceDpp?: unknown } | null;
     }>(GQL.QUERY_RESOURCE_TRACE_DPP, { id });
 
-    if (res.errors?.length) throw new Error(`getTraceDpp failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getTraceDpp failed");
 
     const traceDpp = res.data?.economicResource?.traceDpp;
     return Array.isArray(traceDpp) ? (traceDpp as TraceDppNode[]) : [];
@@ -476,6 +481,6 @@ export class ResourceClient {
     const res = await this.graphql.request(GQL.REJECT_PROPOSAL, {
       intentCite, intentAccept, intentModify,
     });
-    if (res.errors?.length) throw new Error(`rejectProposal failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "rejectProposal failed");
   }
 }

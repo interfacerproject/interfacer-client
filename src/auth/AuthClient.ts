@@ -13,6 +13,7 @@ import { InterfacerConfig } from "../config/config";
 import { KeyStorage } from "../config/storage";
 import { deriveKeys, recreateKeys } from "../crypto/keypair";
 import { GraphQLClient } from "../graphql/GraphQLClient";
+import { GraphQLRequestError } from "../graphql/errors";
 import { Keyring, UserChallenges, UserProfile } from "../types/entities";
 import {
   CLAIM_DID,
@@ -61,7 +62,7 @@ export class AuthClient {
     );
 
     if (res.errors?.length) {
-      throw new Error(`HMAC request failed: ${res.errors[0]!.message}`);
+      throw new GraphQLRequestError(res.errors, "HMAC request failed");
     }
 
     const hmac = res.data?.keypairoomServer;
@@ -121,7 +122,7 @@ export class AuthClient {
     );
 
     if (res.errors?.length) {
-      throw new Error(`Registration failed: ${res.errors[0]!.message}`);
+      throw new GraphQLRequestError(res.errors, "Registration failed");
     }
 
     const agent = res.data?.createPerson.agent;
@@ -161,6 +162,7 @@ export class AuthClient {
       } | null;
     }>(FETCH_SELF, { email, pubkey: eddsaPublicKey });
 
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "User verification failed");
     const person = res.data?.personCheck;
     if (!person) return null;
 
@@ -224,7 +226,7 @@ export class AuthClient {
     const res = await this.graphql.request(SEND_EMAIL_VERIFICATION, { template });
 
     if (res.errors?.length) {
-      throw new Error(`Email verification failed: ${res.errors[0]!.message}`);
+      throw new GraphQLRequestError(res.errors, "Email verification failed");
     }
   }
 
@@ -235,7 +237,7 @@ export class AuthClient {
     const res = await this.graphql.request<{ claimPerson: string }>(CLAIM_DID, { id: personId });
 
     if (res.errors?.length) {
-      throw new Error(`DID claim failed: ${res.errors[0]!.message}`);
+      throw new GraphQLRequestError(res.errors, "DID claim failed");
     }
 
     return res.data?.claimPerson || "";

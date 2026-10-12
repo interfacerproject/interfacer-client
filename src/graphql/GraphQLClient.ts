@@ -1,6 +1,7 @@
 import { InterfacerConfig } from "../config/config";
 import { KeyStorage } from "../config/storage";
 import { signGraphQLRequest } from "../crypto/sign";
+import { GraphQLRequestError, GraphQLSigningError, GraphQLResult } from "./errors";
 
 /**
  * Fetch-based GraphQL client with automatic EdDSA request signing.
@@ -29,7 +30,7 @@ export class GraphQLClient {
     operation: string,
     variables?: TVariables,
     extraHeaders?: Record<string, string>
-  ): Promise<{ data?: TData; errors?: Array<{ message: string }> }> {
+  ): Promise<GraphQLResult<TData>> {
     const bodyObj: Record<string, unknown> = { query: operation };
     if (variables) bodyObj.variables = variables;
 
@@ -52,29 +53,66 @@ export class GraphQLClient {
       try {
         const signed = await signGraphQLRequest(body, this.store);
         Object.assign(headers, signed);
-      } catch (err) {
-        // Signing failed — proceed unsigned (useful for public queries)
-        console.warn("[interfacer-client] GraphQL signing failed:", err);
+      } catch {
+        // Do not downgrade authenticated reads or writes to anonymous calls.
+        // Bootstrap/public requests still work with signing explicitly disabled.
+        throw new GraphQLSigningError();
       }
     }
 
     const url = this.config.zenflowsUrl;
     if (!url) throw new Error("zenflowsUrl not configured. Provide zenflowsUrl or proxyUrl in config.");
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body,
-    });
-
-    if (!res.ok) {
-      return {
-        errors: [{ message: `HTTP ${res.status}: ${res.statusText}` }],
-      };
+    let res: Response;
+    try {
+      res = await fetch(url, { method: "POST", headers, body });
+    } catch {
+      // A failed response does not prove the write was not committed. No retry.
+      throw new GraphQLRequestError([{
+        message: "Unable to reach the service. Check the operation's status before retrying.",
+        extensions: { code: "NETWORK_ERROR" },
+      }]);
     }
 
-    return res.json() as Promise<{ data?: TData; errors?: Array<{ message: string }> }>;
+    if (!res.ok) {
+      const codes: Record<number, string> = {
+        401: "UNAUTHENTICATED", 403: "FORBIDDEN", 409: "CONFLICT",
+        429: "RATE_LIMITED", 503: "SERVICE_UNAVAILABLE",
+      };
+      // Never reflect an upstream error body or arbitrary status text.
+      return { errors: [{
+        message: `HTTP ${res.status}`,
+        extensions: { code: codes[res.status] || "HTTP_ERROR", httpStatus: res.status },
+      }] };
+    }
+
+    let result: unknown;
+    try {
+      result = await res.json();
+    } catch {
+      throw invalidResponse();
+    }
+    if (!isGraphQLResult(result)) throw invalidResponse();
+    return result as GraphQLResult<TData>;
   }
+}
+
+function invalidResponse(): GraphQLRequestError {
+  return new GraphQLRequestError([{
+    message: "The service returned an invalid response. Check the operation's status before retrying.",
+    extensions: { code: "INVALID_RESPONSE" },
+  }]);
+}
+
+function isGraphQLResult(value: unknown): value is GraphQLResult {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const result = value as Record<string, unknown>;
+  if (result.data != null && (typeof result.data !== "object" || Array.isArray(result.data))) return false;
+  if (result.errors !== undefined && (
+    !Array.isArray(result.errors) ||
+    result.errors.some(error => !error || typeof error !== "object" || typeof error.message !== "string")
+  )) return false;
+  return Object.hasOwn(result, "data") || (Array.isArray(result.errors) && result.errors.length > 0);
 }
 
 /** Extract the operation name from a GraphQL document string. */
