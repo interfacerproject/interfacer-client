@@ -16,6 +16,19 @@ export const PATCH_RESOURCE_METADATA = gql`
   }
 `;
 
+// One-transaction, idempotent contribution acceptance (zenflows#76); ACCEPT_PROPOSAL +
+// SATISFY_INTENTS remain for older servers and can partially commit.
+export const ACCEPT_CONTRIBUTION = gql`
+  mutation AcceptContribution($proposalId: ID!) {
+    acceptContribution(proposalId: $proposalId) {
+      proposal { id status }
+      citeEvent { id }
+      acceptEvent { id }
+      modifyEvent { id }
+    }
+  }
+`;
+
 // ─── Instance Variables ────────────────────────────────────────────
 
 export const QUERY_VARIABLES = gql`
