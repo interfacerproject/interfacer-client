@@ -5,6 +5,8 @@ import { AuthClient } from "../auth/AuthClient";
 import { createConfig } from "../config/config";
 import { createMemoryStorage } from "../config/storage";
 import { signGraphQLRequest } from "../crypto/sign";
+import { readFileSync } from "node:fs";
+import ts from "typescript";
 
 vi.mock("../crypto/sign", () => ({ signGraphQLRequest: vi.fn() }));
 const config = createConfig({ zenflowsUrl: "https://backend.example.invalid/api" });
@@ -17,6 +19,24 @@ beforeEach(() => {
   vi.mocked(signGraphQLRequest).mockReset();
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+describe("downlevel error identity", () => {
+  it("retains request and signing prototypes when a consumer compiles to ES5", () => {
+    const source = readFileSync(new URL("../graphql/errors.ts", import.meta.url), "utf8");
+    const compiled = ts.transpileModule(source, {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES5 },
+    }).outputText;
+    const exports = {} as Pick<typeof import("../graphql/errors"), "GraphQLRequestError" | "GraphQLSigningError">;
+    new Function("exports", compiled)(exports);
+    const error = new exports.GraphQLRequestError([denial]);
+    expect(error).toBeInstanceOf(exports.GraphQLRequestError);
+    expect(error).toBeInstanceOf(Error);
+    const signing = new exports.GraphQLSigningError();
+    expect(signing).toBeInstanceOf(exports.GraphQLSigningError);
+    expect(signing).toBeInstanceOf(exports.GraphQLRequestError);
+    expect(signing.code).toBe("SIGNING_FAILED");
+  });
+});
 
 describe("request signing boundary", () => {
   it.each([mutation, "query Private { person(id:\"alice\"){email} }"])("never downgrades a signed operation after signing failure: %s", async operation => {

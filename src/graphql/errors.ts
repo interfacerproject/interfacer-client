@@ -18,6 +18,9 @@ export class GraphQLRequestError extends Error {
 
   constructor(errors: GraphQLError[], context?: string) {
     super([context, errors[0]?.message || "GraphQL request failed"].filter(Boolean).join(": "));
+    // Native Error returns its own object under ES5 downlevel compilation.
+    // Preserve subclass identity for SDK consumers and signing-error subclasses.
+    Object.setPrototypeOf(this, new.target.prototype);
     this.name = "GraphQLRequestError";
     this.graphQLErrors = errors;
     this.code = errors[0]?.extensions?.code || "GRAPHQL_ERROR";
