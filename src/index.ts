@@ -11,6 +11,7 @@ export type { Keyring } from "./types/entities";
 export { ResourceClient } from "./resources/ResourceClient";
 export type { TraceDppNode, TraceDppNodeType } from "./resources/ResourceClient";
 export type { CreateProjectParams, ProjectFilter } from "./resources/types";
+export type { MetadataPatchOptions, MetadataPatchResult } from "./resources/ResourceClient";
 
 // Files
 export { FileClient } from "./files/FileClient";
