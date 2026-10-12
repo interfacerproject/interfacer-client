@@ -32,6 +32,21 @@ function metadataError(code: "BAD_USER_INPUT" | "INVALID_RESPONSE"): GraphQLRequ
   return new GraphQLRequestError([{message: code === "BAD_USER_INPUT" ? "Invalid metadata fields or precondition." : "Invalid metadata patch response.", extensions: {code}}]);
 }
 
+export interface AcceptContributionResult {
+  proposalId: string;
+  status: "ACCEPTED";
+  citeEventId: string;
+  acceptEventId: string;
+  modifyEventId: string;
+}
+function contributionError(code: "BAD_USER_INPUT" | "INVALID_RESPONSE"): GraphQLRequestError {
+  return new GraphQLRequestError([{message: code === "BAD_USER_INPUT" ? "Invalid proposal id." : "Invalid acceptContribution response.", extensions: {code}}]);
+}
+function eventId(value: unknown): string | undefined {
+  const id = isMetadataMap(value) ? value.id : undefined;
+  return typeof id === "string" && id ? id : undefined;
+}
+
 // ─── Types ───────────────────────────────────────────────────────────
 
 export interface CreateProjectParams {
@@ -472,6 +487,32 @@ export class ResourceClient {
     return { proposalId, citeIntentId, acceptIntentId, modifyIntentId };
   }
 
+  /**
+   * Accept a contribution proposal with one signed mutation: the backend writes
+   * the events, satisfactions and the origin's new relation in one transaction.
+   * Accepting an accepted proposal returns the same events, so a caller may
+   * retry after an uncertain outcome; the SDK itself never retries. A rejected
+   * or half-accepted proposal fails with CONFLICT. Requires zenflows#76.
+   */
+  async acceptContribution(proposalId: string): Promise<AcceptContributionResult> {
+    if (typeof proposalId !== "string" || !proposalId.trim()) throw contributionError("BAD_USER_INPUT");
+    const result = await this.graphql.request<{acceptContribution: unknown}>(GQL.ACCEPT_CONTRIBUTION, {proposalId});
+    if (result.errors?.length) throw new GraphQLRequestError(result.errors, "acceptContribution failed");
+    const payload = result.data?.acceptContribution;
+    const proposal = isMetadataMap(payload) && isMetadataMap(payload.proposal) ? payload.proposal : undefined;
+    const citeEventId = isMetadataMap(payload) ? eventId(payload.citeEvent) : undefined;
+    const acceptEventId = isMetadataMap(payload) ? eventId(payload.acceptEvent) : undefined;
+    const modifyEventId = isMetadataMap(payload) ? eventId(payload.modifyEvent) : undefined;
+    if (!proposal || proposal.id !== proposalId || proposal.status !== "ACCEPTED" || !citeEventId || !acceptEventId || !modifyEventId) {
+      throw contributionError("INVALID_RESPONSE");
+    }
+    return {proposalId, status: "ACCEPTED", citeEventId, acceptEventId, modifyEventId};
+  }
+
+  /**
+   * @deprecated Two non-transactional requests: a failure between them leaves
+   * committed events and a retry duplicates them. Use acceptContribution.
+   */
   async acceptProposal(params: {
     proposalId: string;
     citeIntentId: string;
