@@ -10,7 +10,7 @@ const payload = (created = true) => ({
   proposal: { id: "proposal" },
   process: { id: "process" },
   citeIntent: { id: "cite" },
-  acceptIntent: { id: "accept" },
+  acceptIntent: { id: "accept", receiver: { id: "alice" } },
   modifyIntent: { id: "modify" },
   created,
 });
@@ -34,6 +34,7 @@ describe("atomic contribution proposal", () => {
       citeIntentId: "cite",
       acceptIntentId: "accept",
       modifyIntentId: "modify",
+      ownerId: "alice",
       created: true,
     });
     expect(request).toHaveBeenCalledTimes(1);
@@ -78,6 +79,7 @@ describe("atomic contribution proposal", () => {
   it.each([
     ["no payload", { data: { proposeContribution: null } }],
     ["a missing intent", { data: { proposeContribution: { ...payload(), modifyIntent: null } } }],
+    ["no owner", { data: { proposeContribution: { ...payload(), acceptIntent: { id: "accept" } } } }],
     ["no created flag", { data: { proposeContribution: { ...payload(), created: "yes" } } }],
   ])("treats %s as INVALID_RESPONSE", async (_n, value) => {
     request.mockResolvedValue(value);

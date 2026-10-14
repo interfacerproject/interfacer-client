@@ -44,6 +44,8 @@ export interface ContributionProposalResult {
   citeIntentId: string;
   acceptIntentId: string;
   modifyIntentId: string;
+  /** The origin's controller, chosen by the server (Person or Organization). */
+  ownerId: string;
   /** False when the server returned an existing pending proposal. */
   created: boolean;
 }
@@ -474,10 +476,11 @@ export class ResourceClient {
     const id = (key: string) => (isMetadataMap(p) ? eventId(p[key]) : undefined);
     const [proposalId, processId, citeIntentId, acceptIntentId, modifyIntentId] =
       ["proposal", "process", "citeIntent", "acceptIntent", "modifyIntent"].map(id);
-    if (!isMetadataMap(p) || typeof p.created !== "boolean" || !proposalId || !processId || !citeIntentId || !acceptIntentId || !modifyIntentId) {
+    const ownerId = isMetadataMap(p) && isMetadataMap(p.acceptIntent) ? eventId(p.acceptIntent.receiver) : undefined;
+    if (!isMetadataMap(p) || typeof p.created !== "boolean" || !proposalId || !processId || !citeIntentId || !acceptIntentId || !modifyIntentId || !ownerId) {
       throw new GraphQLRequestError([{message: "Invalid proposeContribution response.", extensions: {code: "INVALID_RESPONSE"}}]);
     }
-    return {proposalId, processId, citeIntentId, acceptIntentId, modifyIntentId, created: p.created};
+    return {proposalId, processId, citeIntentId, acceptIntentId, modifyIntentId, ownerId, created: p.created};
   }
 
   /**

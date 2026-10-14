@@ -24,7 +24,7 @@ export const PROPOSE_CONTRIBUTION_ATOMIC = gql`
       proposal { id }
       process { id }
       citeIntent { id }
-      acceptIntent { id }
+      acceptIntent { id receiver { id } }
       modifyIntent { id }
       created
     }
