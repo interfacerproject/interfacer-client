@@ -16,6 +16,21 @@ export const PATCH_RESOURCE_METADATA = gql`
   }
 `;
 
+// One-transaction, idempotent contribution proposal (zenflows#77): the server
+// names the owner (origin controller) and proposer (signer).
+export const PROPOSE_CONTRIBUTION_ATOMIC = gql`
+  mutation ProposeContributionAtomic($fork: ID!, $origin: ID!, $name: String, $note: String) {
+    proposeContribution(resourceForkedId: $fork, resourceOriginId: $origin, name: $name, note: $note) {
+      proposal { id }
+      process { id }
+      citeIntent { id }
+      acceptIntent { id }
+      modifyIntent { id }
+      created
+    }
+  }
+`;
+
 // One-transaction, idempotent contribution acceptance (zenflows#76); ACCEPT_PROPOSAL +
 // SATISFY_INTENTS remain for older servers and can partially commit.
 export const ACCEPT_CONTRIBUTION = gql`

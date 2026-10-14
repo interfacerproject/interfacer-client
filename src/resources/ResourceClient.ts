@@ -32,6 +32,22 @@ function metadataError(code: "BAD_USER_INPUT" | "INVALID_RESPONSE"): GraphQLRequ
   return new GraphQLRequestError([{message: code === "BAD_USER_INPUT" ? "Invalid metadata fields or precondition." : "Invalid metadata patch response.", extensions: {code}}]);
 }
 
+export interface ContributionProposalParams {
+  resourceForkedId: string;
+  resourceOriginId: string;
+  name?: string;
+  note?: string;
+}
+export interface ContributionProposalResult {
+  proposalId: string;
+  processId: string;
+  citeIntentId: string;
+  acceptIntentId: string;
+  modifyIntentId: string;
+  /** False when the server returned an existing pending proposal. */
+  created: boolean;
+}
+
 export interface AcceptContributionResult {
   proposalId: string;
   status: "ACCEPTED";
@@ -435,6 +451,40 @@ export class ResourceClient {
 
   // ─── Proposals ─────────────────────────────────────────────────────
 
+  /**
+   * Create a contribution proposal with one signed mutation; the server writes
+   * the process, intents, proposal and links in one transaction, names the
+   * origin's controller as owner and returns an existing pending proposal for
+   * the same fork and origin (created: false). Never retried by the SDK.
+   * Requires zenflows#77.
+   */
+  async createContributionProposal(params: ContributionProposalParams): Promise<ContributionProposalResult> {
+    const ok = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+    const optional = (v: unknown) => v === undefined || typeof v === "string";
+    if (!isMetadataMap(params) || !ok(params.resourceForkedId) || !ok(params.resourceOriginId) ||
+      params.resourceForkedId === params.resourceOriginId || !optional(params.name) || !optional(params.note)) {
+      throw new GraphQLRequestError([{message: "Invalid contribution proposal.", extensions: {code: "BAD_USER_INPUT"}}]);
+    }
+    const variables: Record<string, string> = {fork: params.resourceForkedId, origin: params.resourceOriginId};
+    if (params.name !== undefined) variables.name = params.name;
+    if (params.note !== undefined) variables.note = params.note;
+    const result = await this.graphql.request<{proposeContribution: unknown}>(GQL.PROPOSE_CONTRIBUTION_ATOMIC, variables);
+    if (result.errors?.length) throw new GraphQLRequestError(result.errors, "createContributionProposal failed");
+    const p = result.data?.proposeContribution;
+    const id = (key: string) => (isMetadataMap(p) ? eventId(p[key]) : undefined);
+    const [proposalId, processId, citeIntentId, acceptIntentId, modifyIntentId] =
+      ["proposal", "process", "citeIntent", "acceptIntent", "modifyIntent"].map(id);
+    if (!isMetadataMap(p) || typeof p.created !== "boolean" || !proposalId || !processId || !citeIntentId || !acceptIntentId || !modifyIntentId) {
+      throw new GraphQLRequestError([{message: "Invalid proposeContribution response.", extensions: {code: "INVALID_RESPONSE"}}]);
+    }
+    return {proposalId, processId, citeIntentId, acceptIntentId, modifyIntentId, created: p.created};
+  }
+
+  /**
+   * @deprecated Four non-transactional requests that name a caller-supplied
+   * owner: a failure leaves orphans and a retry duplicates. Use
+   * createContributionProposal.
+   */
   async proposeContribution(params: {
     resourceForkedId: string;
     resourceOriginId: string;
