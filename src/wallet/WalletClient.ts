@@ -5,7 +5,7 @@
  */
 import { InterfacerConfig } from "../config/config";
 import { KeyStorage } from "../config/storage";
-import { signGraphQLRequest } from "../crypto/sign";
+import { signGraphQLRequest, signDidRequest } from "../crypto/sign";
 
 export enum Token {
   Idea = "idea",
@@ -73,7 +73,9 @@ export class WalletClient {
     if (!walletUrl) throw new Error("walletUrl not configured");
 
     const body = JSON.stringify({ event });
-    const headers = await signGraphQLRequest(body, this.store);
+    // The wallet authenticates on did-sign/did-pk (did-auth.go) and forwards
+    // them as the PDP proof, so sign with signDidRequest, not signGraphQLRequest.
+    const headers = await signDidRequest(body, this.store);
 
     const res = await fetch(walletUrl, {
       method: "POST",

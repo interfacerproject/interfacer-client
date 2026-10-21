@@ -4,10 +4,9 @@ import { WalletClient } from "../wallet/WalletClient";
 
 // Sign is cryptographic (zenroom); stub it to fixed headers.
 vi.mock("../crypto/sign", () => ({
-  signGraphQLRequest: vi.fn(async () => ({
-    "zenflows-sign": "SIG",
-    "zenflows-user": "u",
-    "zenflows-hash": "H",
+  signDidRequest: vi.fn(async () => ({
+    "did-sign": "SIG",
+    "did-pk": "PK",
   })),
 }));
 
@@ -36,7 +35,8 @@ describe("WalletClient.issueForEvent", () => {
     expect(body).toEqual({ event: { type: "accept", id: "01EVT" } });
     expect(body.owner).toBeUndefined();
     expect(body.amount).toBeUndefined();
-    expect(init.headers["zenflows-sign"]).toBe("SIG");
+    expect(init.headers["did-sign"]).toBe("SIG");
+    expect(init.headers["did-pk"]).toBe("PK");
   });
 
   it("throws when the server denies (success:false), minting nothing", async () => {
