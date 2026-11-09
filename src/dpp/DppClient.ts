@@ -38,6 +38,31 @@ export class DppClient {
     return headers;
   }
 
+  /**
+   * Sign a body-less request (DELETE) by signing the object id string. The
+   * DPP service reconstructs the signed bytes from the path id, so the
+   * signature is bound to exactly this object (cross-service authz contract
+   * §2). Returns DID headers plus x-user-id as a logged hint the server does
+   * not trust for the principal.
+   */
+  private async signedIdRequest(id: string): Promise<Record<string, string>> {
+    const headers: Record<string, string> = { ...(await signDidRequest(id, this.store)) };
+    const userId = this.store.getItem("authId");
+    if (userId) headers["x-user-id"] = userId;
+    return headers;
+  }
+
+  /** Throw a uniform error for a non-ok DPP response. */
+  private async ensureOk(res: Response, method: string, path: string): Promise<void> {
+    if (res.ok) return;
+    let errMsg = res.statusText;
+    try {
+      const err = await res.json();
+      errMsg = err.error || errMsg;
+    } catch { /* ignore */ }
+    throw new Error(`DPP ${method} ${path} failed: ${errMsg}`);
+  }
+
   /** Generic request helper. */
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.dppUrl}${path}`;
@@ -45,18 +70,19 @@ export class DppClient {
     const jsonBody = body != null ? JSON.stringify(body) : undefined;
 
     const res = await fetch(url, { method, headers, body: jsonBody });
-
-    if (!res.ok) {
-      let errMsg = res.statusText;
-      try {
-        const err = await res.json();
-        errMsg = err.error || errMsg;
-      } catch { /* ignore */ }
-      throw new Error(`DPP ${method} ${path} failed: ${errMsg}`);
-    }
+    await this.ensureOk(res, method, path);
 
     if (res.status === 204) return undefined as T;
     return res.json();
+  }
+
+  /** DELETE a body-less resource, signing the given object id. */
+  private async deleteSigned(path: string, signId: string): Promise<void> {
+    const res = await fetch(`${this.dppUrl}${path}`, {
+      method: "DELETE",
+      headers: await this.signedIdRequest(signId),
+    });
+    await this.ensureOk(res, "DELETE", path);
   }
 
   // ─── CRUD ──────────────────────────────────────────────────────────
@@ -74,7 +100,7 @@ export class DppClient {
   }
 
   async deleteDpp(id: string): Promise<void> {
-    return this.request("DELETE", `/dpp/${encodeURIComponent(id)}`);
+    return this.deleteSigned(`/dpp/${encodeURIComponent(id)}`, id);
   }
 
   // ─── List / Query ──────────────────────────────────────────────────
@@ -136,9 +162,11 @@ export class DppClient {
   }
 
   async deleteAttachment(dppId: string, attachmentId: string): Promise<void> {
-    return this.request(
-      "DELETE",
-      `/dpp/${encodeURIComponent(dppId)}/attachments/${encodeURIComponent(attachmentId)}`
+    // The DPP service binds the signature to the DPP object id (the :id path
+    // param), so sign dppId, not attachmentId.
+    return this.deleteSigned(
+      `/dpp/${encodeURIComponent(dppId)}/attachments/${encodeURIComponent(attachmentId)}`,
+      dppId
     );
   }
 
