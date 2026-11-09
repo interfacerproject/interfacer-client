@@ -7,6 +7,15 @@
 
 import { gql } from "./gql";
 
+// Additive metadata-only mutation; legacy UPDATE_METADATA remains replacement.
+export const PATCH_RESOURCE_METADATA = gql`
+  mutation PatchResourceMetadata($id: ID!, $fields: JSONObject!, $expectedMetadataHash: String) {
+    patchEconomicResourceMetadata(resourceId: $id, fields: $fields, expectedMetadataHash: $expectedMetadataHash) {
+      economicResource { id metadata metadataHash }
+    }
+  }
+`;
+
 // ─── Instance Variables ────────────────────────────────────────────
 
 export const QUERY_VARIABLES = gql`

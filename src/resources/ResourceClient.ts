@@ -14,6 +14,24 @@ import { prefixedTag } from "../tagging/TaggingClient";
 import { TAG_PREFIX } from "../tagging/constants";
 import { ProjectType } from "../types/entities";
 
+export interface MetadataPatchOptions {
+  /** Compare with a fingerprint from economicResource.metadataHash; not a control epoch. */
+  expectedMetadataHash?: string;
+}
+export interface MetadataPatchResult {
+  id: string;
+  metadata: Record<string, unknown> | null;
+  metadataHash: string;
+}
+
+function isMetadataMap(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value) &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+}
+function metadataError(code: "BAD_USER_INPUT" | "INVALID_RESPONSE"): GraphQLRequestError {
+  return new GraphQLRequestError([{message: code === "BAD_USER_INPUT" ? "Invalid metadata fields or precondition." : "Invalid metadata patch response.", extensions: {code}}]);
+}
+
 // ─── Types ───────────────────────────────────────────────────────────
 
 export interface CreateProjectParams {
@@ -331,6 +349,38 @@ export class ResourceClient {
 
   // ─── Metadata ──────────────────────────────────────────────────────
 
+  /**
+   * One signed metadata-only mutation: shallow field replacement under the
+   * backend row lock, with optional content CAS. No processes/economic events,
+   * quantity changes, preflight or retry. Arrays/nested objects replace a field;
+   * null is a value, not deletion. Without CAS, overlapping fields are last-write-wins.
+   * The token detects differing current content, not ABA or every historical revision.
+   */
+  async patchMetadata(resourceId: string, fields: Record<string, unknown>, options: MetadataPatchOptions = {}): Promise<MetadataPatchResult> {
+    if (typeof resourceId !== "string" || !resourceId.trim() || !isMetadataMap(fields) || !isMetadataMap(options)) throw metadataError("BAD_USER_INPUT");
+    const hasExpected = Object.prototype.hasOwnProperty.call(options, "expectedMetadataHash");
+    if (hasExpected && (typeof options.expectedMetadataHash !== "string" || !/^[0-9a-f]{64}$/.test(options.expectedMetadataHash))) throw metadataError("BAD_USER_INPUT");
+    let serialized: string;
+    try {
+      serialized = JSON.stringify(fields, (_key, value) => {
+        if (value === undefined || ["function", "symbol", "bigint"].includes(typeof value) || (typeof value === "number" && !Number.isFinite(value))) throw metadataError("BAD_USER_INPUT");
+        return value;
+      });
+      if (!isMetadataMap(JSON.parse(serialized))) throw metadataError("BAD_USER_INPUT");
+    } catch {
+      throw metadataError("BAD_USER_INPUT");
+    }
+    const result = await this.graphql.request<{patchEconomicResourceMetadata: {economicResource: MetadataPatchResult} | null}>(GQL.PATCH_RESOURCE_METADATA, {
+      id: resourceId, fields: serialized, ...(hasExpected ? {expectedMetadataHash: options.expectedMetadataHash} : {}),
+    });
+    if (result.errors?.length) throw new GraphQLRequestError(result.errors, "patchMetadata failed");
+    const resource = result.data?.patchEconomicResourceMetadata?.economicResource;
+    if (!resource || resource.id !== resourceId || (resource.metadata !== null && !isMetadataMap(resource.metadata)) || typeof resource.metadataHash !== "string" || !/^[0-9a-f]{64}$/.test(resource.metadataHash)) throw metadataError("INVALID_RESPONSE");
+    return resource;
+  }
+
+
+  /** Legacy full replacement through economic events; not an atomic field patch. */
   async updateMetadata(
     resourceId: string,
     metadata: Record<string, unknown>,

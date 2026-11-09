@@ -3,8 +3,8 @@ name: CI
 on:
   push:
     branches: [main]
+  # Validate stacked SDK PRs as well as main-targeting PRs.
   pull_request:
-    branches: [main]
   workflow_call:
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm build
-      - run: pnpm vitest run src/__tests__/unit.test.ts src/__tests__/integration.test.ts src/__tests__/graphql-errors.test.ts
+      - run: pnpm vitest run src/__tests__/unit.test.ts src/__tests__/integration.test.ts src/__tests__/graphql-errors.test.ts src/__tests__/metadata-patch.test.ts
 
   real-backend:
     runs-on: ubuntu-latest
