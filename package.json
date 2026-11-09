@@ -1,6 +1,6 @@
 {
   "name": "@dyne/interfacer-client",
-  "version": "0.1.0",
+  "version": "0.7.0-staging.1",
   "packageManager": "pnpm@9.13.1",
   "description": "TypeScript client SDK for the Interfacer ecosystem — Zenflows, DPP, Inbox, Wallet, Social",
   "license": "AGPL-3.0-or-later",
