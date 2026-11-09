@@ -21,7 +21,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm build
-      - run: pnpm vitest run src/__tests__/unit.test.ts src/__tests__/integration.test.ts
+      - run: pnpm vitest run src/__tests__/unit.test.ts src/__tests__/integration.test.ts src/__tests__/graphql-errors.test.ts
 
   real-backend:
     runs-on: ubuntu-latest
