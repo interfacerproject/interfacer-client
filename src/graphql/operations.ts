@@ -7,6 +7,43 @@
 
 import { gql } from "./gql";
 
+// Additive metadata-only mutation; legacy UPDATE_METADATA remains replacement.
+export const PATCH_RESOURCE_METADATA = gql`
+  mutation PatchResourceMetadata($id: ID!, $fields: JSONObject!, $expectedMetadataHash: String) {
+    patchEconomicResourceMetadata(resourceId: $id, fields: $fields, expectedMetadataHash: $expectedMetadataHash) {
+      economicResource { id metadata metadataHash }
+    }
+  }
+`;
+
+// One-transaction, idempotent contribution proposal (zenflows#77): the server
+// names the owner (origin controller) and proposer (signer).
+export const PROPOSE_CONTRIBUTION_ATOMIC = gql`
+  mutation ProposeContributionAtomic($fork: ID!, $origin: ID!, $name: String, $note: String) {
+    proposeContribution(resourceForkedId: $fork, resourceOriginId: $origin, name: $name, note: $note) {
+      proposal { id }
+      process { id }
+      citeIntent { id }
+      acceptIntent { id receiver { id } }
+      modifyIntent { id }
+      created
+    }
+  }
+`;
+
+// One-transaction, idempotent contribution acceptance (zenflows#76); ACCEPT_PROPOSAL +
+// SATISFY_INTENTS remain for older servers and can partially commit.
+export const ACCEPT_CONTRIBUTION = gql`
+  mutation AcceptContribution($proposalId: ID!) {
+    acceptContribution(proposalId: $proposalId) {
+      proposal { id status }
+      citeEvent { id }
+      acceptEvent { id }
+      modifyEvent { id }
+    }
+  }
+`;
+
 // ─── Instance Variables ────────────────────────────────────────────
 
 export const QUERY_VARIABLES = gql`

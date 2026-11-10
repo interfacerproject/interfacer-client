@@ -8,10 +8,62 @@ import { InterfacerConfig } from "../config/config";
 import { KeyStorage } from "../config/storage";
 import { getInstanceVariables } from "../graphql/instance-variables";
 import { GraphQLClient } from "../graphql/GraphQLClient";
+import { GraphQLRequestError } from "../graphql/errors";
 import * as GQL from "../graphql/operations";
 import { prefixedTag } from "../tagging/TaggingClient";
 import { TAG_PREFIX } from "../tagging/constants";
 import { ProjectType } from "../types/entities";
+
+export interface MetadataPatchOptions {
+  /** Compare with a fingerprint from economicResource.metadataHash; not a control epoch. */
+  expectedMetadataHash?: string;
+}
+export interface MetadataPatchResult {
+  id: string;
+  metadata: Record<string, unknown> | null;
+  metadataHash: string;
+}
+
+function isMetadataMap(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value) &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+}
+function metadataError(code: "BAD_USER_INPUT" | "INVALID_RESPONSE"): GraphQLRequestError {
+  return new GraphQLRequestError([{message: code === "BAD_USER_INPUT" ? "Invalid metadata fields or precondition." : "Invalid metadata patch response.", extensions: {code}}]);
+}
+
+export interface ContributionProposalParams {
+  resourceForkedId: string;
+  resourceOriginId: string;
+  name?: string;
+  note?: string;
+}
+export interface ContributionProposalResult {
+  proposalId: string;
+  processId: string;
+  citeIntentId: string;
+  acceptIntentId: string;
+  modifyIntentId: string;
+  /** The origin's controller, chosen by the server (Person or Organization). */
+  ownerId: string;
+  /** False when the server returned an existing pending proposal. */
+  created: boolean;
+}
+
+export interface AcceptContributionResult {
+  proposalId: string;
+  status: "ACCEPTED";
+  citeEventId: string;
+  acceptEventId: string;
+  modifyEventId: string;
+}
+function contributionError(code: "BAD_USER_INPUT" | "INVALID_RESPONSE"): GraphQLRequestError {
+  return new GraphQLRequestError([{message: code === "BAD_USER_INPUT" ? "Invalid proposal id." : "Invalid acceptContribution response.", extensions: {code}}]);
+}
+function eventId(value: unknown): string | undefined {
+  const id = isMetadataMap(value) ? value.id : undefined;
+  return typeof id === "string" && id ? id : undefined;
+}
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -114,7 +166,7 @@ export class ResourceClient {
       GQL.CREATE_PROCESS,
       { name }
     );
-    if (res.errors?.length) throw new Error(`createProcess failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createProcess failed");
     return res.data!.createProcess.process.id;
   }
 
@@ -134,7 +186,7 @@ export class ResourceClient {
       lat: params.lat || 0,
       lng: params.lng || 0,
     });
-    if (res.errors?.length) throw new Error(`createLocation failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createLocation failed");
     return res.data!.createSpatialThing.spatialThing;
   }
 
@@ -176,7 +228,7 @@ export class ResourceClient {
       createEconomicEvent: { economicEvent: { id: string; resourceInventoriedAs: { id: string; name: string } } };
     }>(GQL.CREATE_PROJECT, variables);
 
-    if (res.errors?.length) throw new Error(`createProject failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createProject failed");
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
   }
 
@@ -220,7 +272,7 @@ export class ResourceClient {
       createEconomicEvent: { economicEvent: { resourceInventoriedAs: { id: string; name: string } } };
     }>(GQL.CREATE_MACHINE_RESOURCE, variables);
 
-    if (res.errors?.length) throw new Error(`createMachine failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createMachine failed");
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
   }
 
@@ -246,7 +298,7 @@ export class ResourceClient {
       note: params.note || "",
     });
 
-    if (res.errors?.length) throw new Error(`createDppResource failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "createDppResource failed");
     return res.data!.createEconomicEvent.economicEvent.resourceInventoriedAs;
   }
 
@@ -257,6 +309,7 @@ export class ResourceClient {
       GQL.QUERY_RESOURCE,
       { id }
     );
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getResource failed");
     return res.data?.economicResource ?? null;
   }
 
@@ -265,6 +318,7 @@ export class ResourceClient {
       ...pagination,
       filter: filter || {},
     });
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "listResources failed");
     return res.data || {};
   }
 
@@ -273,6 +327,7 @@ export class ResourceClient {
       ...pagination,
       filter: filter || {},
     });
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getProjects failed");
     return res.data || {};
   }
 
@@ -283,6 +338,7 @@ export class ResourceClient {
     const res = await this.graphql.request(GQL.QUERY_MACHINES, {
       resourceSpecId: machineSpecId,
     });
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getMachines failed");
     return res.data || {};
   }
 
@@ -297,7 +353,7 @@ export class ResourceClient {
       process: processId,
       unitOne: vars.unitOne,
     });
-    if (res.errors?.length) throw new Error(`citeResource failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "citeResource failed");
   }
 
   async consumeResource(resourceId: string, processId: string): Promise<void> {
@@ -309,7 +365,7 @@ export class ResourceClient {
       process: processId,
       unitOne: vars.unitOne,
     });
-    if (res.errors?.length) throw new Error(`consumeResource failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "consumeResource failed");
   }
 
   async contributeToResource(processId: string, contributionTypeSpecId: string): Promise<void> {
@@ -321,11 +377,43 @@ export class ResourceClient {
       unitOne: vars.unitOne,
       conformsTo: contributionTypeSpecId,
     });
-    if (res.errors?.length) throw new Error(`contribute failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "contribute failed");
   }
 
   // ─── Metadata ──────────────────────────────────────────────────────
 
+  /**
+   * One signed metadata-only mutation: shallow field replacement under the
+   * backend row lock, with optional content CAS. No processes/economic events,
+   * quantity changes, preflight or retry. Arrays/nested objects replace a field;
+   * null is a value, not deletion. Without CAS, overlapping fields are last-write-wins.
+   * The token detects differing current content, not ABA or every historical revision.
+   */
+  async patchMetadata(resourceId: string, fields: Record<string, unknown>, options: MetadataPatchOptions = {}): Promise<MetadataPatchResult> {
+    if (typeof resourceId !== "string" || !resourceId.trim() || !isMetadataMap(fields) || !isMetadataMap(options)) throw metadataError("BAD_USER_INPUT");
+    const hasExpected = Object.prototype.hasOwnProperty.call(options, "expectedMetadataHash");
+    if (hasExpected && (typeof options.expectedMetadataHash !== "string" || !/^[0-9a-f]{64}$/.test(options.expectedMetadataHash))) throw metadataError("BAD_USER_INPUT");
+    let serialized: string;
+    try {
+      serialized = JSON.stringify(fields, (_key, value) => {
+        if (value === undefined || ["function", "symbol", "bigint"].includes(typeof value) || (typeof value === "number" && !Number.isFinite(value))) throw metadataError("BAD_USER_INPUT");
+        return value;
+      });
+      if (!isMetadataMap(JSON.parse(serialized))) throw metadataError("BAD_USER_INPUT");
+    } catch {
+      throw metadataError("BAD_USER_INPUT");
+    }
+    const result = await this.graphql.request<{patchEconomicResourceMetadata: {economicResource: MetadataPatchResult} | null}>(GQL.PATCH_RESOURCE_METADATA, {
+      id: resourceId, fields: serialized, ...(hasExpected ? {expectedMetadataHash: options.expectedMetadataHash} : {}),
+    });
+    if (result.errors?.length) throw new GraphQLRequestError(result.errors, "patchMetadata failed");
+    const resource = result.data?.patchEconomicResourceMetadata?.economicResource;
+    if (!resource || resource.id !== resourceId || (resource.metadata !== null && !isMetadataMap(resource.metadata)) || typeof resource.metadataHash !== "string" || !/^[0-9a-f]{64}$/.test(resource.metadataHash)) throw metadataError("INVALID_RESPONSE");
+    return resource;
+  }
+
+
+  /** Legacy full replacement through economic events; not an atomic field patch. */
   async updateMetadata(
     resourceId: string,
     metadata: Record<string, unknown>,
@@ -339,7 +427,7 @@ export class ResourceClient {
       now: new Date().toISOString(),
       metadata: JSON.stringify(metadata),
     });
-    if (res.errors?.length) throw new Error(`updateMetadata failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "updateMetadata failed");
   }
 
   async updateClassifiedAs(resourceId: string, tags: string[]): Promise<void> {
@@ -347,7 +435,7 @@ export class ResourceClient {
       id: resourceId,
       classifiedAs: tags,
     });
-    if (res.errors?.length) throw new Error(`updateClassifiedAs failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "updateClassifiedAs failed");
   }
 
   async relocateResource(resourceId: string, locationId: string): Promise<void> {
@@ -360,11 +448,46 @@ export class ResourceClient {
       now: new Date().toISOString(),
       location: locationId,
     });
-    if (res.errors?.length) throw new Error(`relocate failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "relocate failed");
   }
 
   // ─── Proposals ─────────────────────────────────────────────────────
 
+  /**
+   * Create a contribution proposal with one signed mutation; the server writes
+   * the process, intents, proposal and links in one transaction, names the
+   * origin's controller as owner and returns an existing pending proposal for
+   * the same fork and origin (created: false). Never retried by the SDK.
+   * Requires zenflows#77.
+   */
+  async createContributionProposal(params: ContributionProposalParams): Promise<ContributionProposalResult> {
+    const ok = (v: unknown) => typeof v === "string" && v.trim().length > 0;
+    const optional = (v: unknown) => v === undefined || typeof v === "string";
+    if (!isMetadataMap(params) || !ok(params.resourceForkedId) || !ok(params.resourceOriginId) ||
+      params.resourceForkedId === params.resourceOriginId || !optional(params.name) || !optional(params.note)) {
+      throw new GraphQLRequestError([{message: "Invalid contribution proposal.", extensions: {code: "BAD_USER_INPUT"}}]);
+    }
+    const variables: Record<string, string> = {fork: params.resourceForkedId, origin: params.resourceOriginId};
+    if (params.name !== undefined) variables.name = params.name;
+    if (params.note !== undefined) variables.note = params.note;
+    const result = await this.graphql.request<{proposeContribution: unknown}>(GQL.PROPOSE_CONTRIBUTION_ATOMIC, variables);
+    if (result.errors?.length) throw new GraphQLRequestError(result.errors, "createContributionProposal failed");
+    const p = result.data?.proposeContribution;
+    const id = (key: string) => (isMetadataMap(p) ? eventId(p[key]) : undefined);
+    const [proposalId, processId, citeIntentId, acceptIntentId, modifyIntentId] =
+      ["proposal", "process", "citeIntent", "acceptIntent", "modifyIntent"].map(id);
+    const ownerId = isMetadataMap(p) && isMetadataMap(p.acceptIntent) ? eventId(p.acceptIntent.receiver) : undefined;
+    if (!isMetadataMap(p) || typeof p.created !== "boolean" || !proposalId || !processId || !citeIntentId || !acceptIntentId || !modifyIntentId || !ownerId) {
+      throw new GraphQLRequestError([{message: "Invalid proposeContribution response.", extensions: {code: "INVALID_RESPONSE"}}]);
+    }
+    return {proposalId, processId, citeIntentId, acceptIntentId, modifyIntentId, ownerId, created: p.created};
+  }
+
+  /**
+   * @deprecated Four non-transactional requests that name a caller-supplied
+   * owner: a failure leaves orphans and a retry duplicates. Use
+   * createContributionProposal.
+   */
   async proposeContribution(params: {
     resourceForkedId: string;
     resourceOriginId: string;
@@ -389,7 +512,7 @@ export class ResourceClient {
       unitOne: vars.unitOne,
       resourceOrigin: params.resourceOriginId,
     });
-    if (intentsRes.errors?.length) throw new Error(`proposeContribution intents failed: ${intentsRes.errors[0]!.message}`);
+    if (intentsRes.errors?.length) throw new GraphQLRequestError(intentsRes.errors, "proposeContribution intents failed");
 
     // Create proposal
     const proposalRes = await this.graphql.request<{
@@ -398,7 +521,7 @@ export class ResourceClient {
       name: `Contribution to resource`,
       note: params.note,
     });
-    if (proposalRes.errors?.length) throw new Error(`createProposal failed: ${proposalRes.errors[0]!.message}`);
+    if (proposalRes.errors?.length) throw new GraphQLRequestError(proposalRes.errors, "createProposal failed");
 
     const proposalId = proposalRes.data!.createProposal.proposal.id;
     const citeIntentId = intentsRes.data!.citeResourceForked.intent.id;
@@ -412,11 +535,37 @@ export class ResourceClient {
       acceptIntent: acceptIntentId,
       modifyIntent: modifyIntentId,
     });
-    if (linkRes.errors?.length) throw new Error(`linkIntents failed: ${linkRes.errors[0]!.message}`);
+    if (linkRes.errors?.length) throw new GraphQLRequestError(linkRes.errors, "linkIntents failed");
 
     return { proposalId, citeIntentId, acceptIntentId, modifyIntentId };
   }
 
+  /**
+   * Accept a contribution proposal with one signed mutation: the backend writes
+   * the events, satisfactions and the origin's new relation in one transaction.
+   * Accepting an accepted proposal returns the same events, so a caller may
+   * retry after an uncertain outcome; the SDK itself never retries. A rejected
+   * or half-accepted proposal fails with CONFLICT. Requires zenflows#76.
+   */
+  async acceptContribution(proposalId: string): Promise<AcceptContributionResult> {
+    if (typeof proposalId !== "string" || !proposalId.trim()) throw contributionError("BAD_USER_INPUT");
+    const result = await this.graphql.request<{acceptContribution: unknown}>(GQL.ACCEPT_CONTRIBUTION, {proposalId});
+    if (result.errors?.length) throw new GraphQLRequestError(result.errors, "acceptContribution failed");
+    const payload = result.data?.acceptContribution;
+    const proposal = isMetadataMap(payload) && isMetadataMap(payload.proposal) ? payload.proposal : undefined;
+    const citeEventId = isMetadataMap(payload) ? eventId(payload.citeEvent) : undefined;
+    const acceptEventId = isMetadataMap(payload) ? eventId(payload.acceptEvent) : undefined;
+    const modifyEventId = isMetadataMap(payload) ? eventId(payload.modifyEvent) : undefined;
+    if (!proposal || proposal.id !== proposalId || proposal.status !== "ACCEPTED" || !citeEventId || !acceptEventId || !modifyEventId) {
+      throw contributionError("INVALID_RESPONSE");
+    }
+    return {proposalId, status: "ACCEPTED", citeEventId, acceptEventId, modifyEventId};
+  }
+
+  /**
+   * @deprecated Two non-transactional requests: a failure between them leaves
+   * committed events and a retry duplicates them. Use acceptContribution.
+   */
   async acceptProposal(params: {
     proposalId: string;
     citeIntentId: string;
@@ -446,7 +595,7 @@ export class ResourceClient {
       creationTime: new Date().toISOString(),
       metadata: JSON.stringify(params.newMetadata),
     });
-    if (eventsRes.errors?.length) throw new Error(`acceptProposal events failed: ${eventsRes.errors[0]!.message}`);
+    if (eventsRes.errors?.length) throw new GraphQLRequestError(eventsRes.errors, "acceptProposal events failed");
 
     // Satisfy intents
     const satRes = await this.graphql.request(GQL.SATISFY_INTENTS, {
@@ -458,7 +607,7 @@ export class ResourceClient {
       eventAccept: eventsRes.data!.accept.economicEvent.id,
       eventModify: eventsRes.data!.modify.economicEvent.id,
     });
-    if (satRes.errors?.length) throw new Error(`satisfyIntents failed: ${satRes.errors[0]!.message}`);
+    if (satRes.errors?.length) throw new GraphQLRequestError(satRes.errors, "satisfyIntents failed");
   }
 
   async getTraceDpp(id: string): Promise<TraceDppNode[]> {
@@ -466,7 +615,7 @@ export class ResourceClient {
       economicResource: { traceDpp?: unknown } | null;
     }>(GQL.QUERY_RESOURCE_TRACE_DPP, { id });
 
-    if (res.errors?.length) throw new Error(`getTraceDpp failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "getTraceDpp failed");
 
     const traceDpp = res.data?.economicResource?.traceDpp;
     return Array.isArray(traceDpp) ? (traceDpp as TraceDppNode[]) : [];
@@ -476,6 +625,6 @@ export class ResourceClient {
     const res = await this.graphql.request(GQL.REJECT_PROPOSAL, {
       intentCite, intentAccept, intentModify,
     });
-    if (res.errors?.length) throw new Error(`rejectProposal failed: ${res.errors[0]!.message}`);
+    if (res.errors?.length) throw new GraphQLRequestError(res.errors, "rejectProposal failed");
   }
 }

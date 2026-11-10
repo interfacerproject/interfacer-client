@@ -11,6 +11,9 @@ export type { Keyring } from "./types/entities";
 export { ResourceClient } from "./resources/ResourceClient";
 export type { TraceDppNode, TraceDppNodeType } from "./resources/ResourceClient";
 export type { CreateProjectParams, ProjectFilter } from "./resources/types";
+export type { MetadataPatchOptions, MetadataPatchResult } from "./resources/ResourceClient";
+export type { AcceptContributionResult } from "./resources/ResourceClient";
+export type { ContributionProposalParams, ContributionProposalResult } from "./resources/ResourceClient";
 
 // Files
 export { FileClient } from "./files/FileClient";
@@ -71,6 +74,8 @@ export type { KeyStorage } from "./config/storage";
 
 // GraphQL
 export { GraphQLClient } from "./graphql/GraphQLClient";
+export { GraphQLRequestError, GraphQLSigningError, throwIfGraphQLErrors } from "./graphql/errors";
+export type { GraphQLError, GraphQLResult } from "./graphql/errors";
 export * from "./graphql/operations";
 export { clearInstanceVariablesCache, getInstanceVariables } from "./graphql/instance-variables";
 export type { InstanceVariables } from "./graphql/instance-variables";

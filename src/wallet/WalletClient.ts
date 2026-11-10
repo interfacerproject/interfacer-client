@@ -5,7 +5,7 @@
  */
 import { InterfacerConfig } from "../config/config";
 import { KeyStorage } from "../config/storage";
-import { signGraphQLRequest } from "../crypto/sign";
+import { signGraphQLRequest, signDidRequest } from "../crypto/sign";
 
 export enum Token {
   Idea = "idea",
@@ -60,6 +60,34 @@ export class WalletClient {
     });
 
     if (!res.ok) throw new Error(`Wallet addPoints failed: ${res.statusText}`);
+  }
+
+  /**
+   * Issue points for a ValueFlows/social event. Unlike addPoints, the caller
+   * does NOT choose the recipient or amount: it names the event that justifies
+   * the issuance, and the server (Zenflows PDP) attests it and derives the
+   * recipients and server-authoritative amounts. Phase 1 supports `accept`.
+   */
+  async issueForEvent(event: { type: string; id: string }): Promise<void> {
+    const walletUrl = this.config.walletUrl;
+    if (!walletUrl) throw new Error("walletUrl not configured");
+
+    const body = JSON.stringify({ event });
+    // The wallet authenticates on did-sign/did-pk (did-auth.go) and forwards
+    // them as the PDP proof, so sign with signDidRequest, not signGraphQLRequest.
+    const headers = await signDidRequest(body, this.store);
+
+    const res = await fetch(walletUrl, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body,
+    });
+
+    if (!res.ok) throw new Error(`Wallet issueForEvent failed: ${res.statusText}`);
+    const data = await res.json();
+    if (data?.success !== true) {
+      throw new Error(`Wallet issue denied: ${data?.reason ?? "unknown"}`);
+    }
   }
 
   /** Get point trend over a period (change since period start). */
