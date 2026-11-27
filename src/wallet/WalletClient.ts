@@ -5,7 +5,7 @@
  */
 import { InterfacerConfig } from "../config/config";
 import { KeyStorage } from "../config/storage";
-import { signGraphQLRequest, signDidRequest } from "../crypto/sign";
+import { signDidRequest } from "../crypto/sign";
 
 export enum Token {
   Idea = "idea",
@@ -51,7 +51,9 @@ export class WalletClient {
       owner: agentId,
     });
 
-    const headers = await signGraphQLRequest(body, this.store);
+    // zenflows-wallet authenticates on did-sign/did-pk and its CORS allows only
+    // those: zenflows-* headers made every browser call fail its preflight.
+    const headers = await signDidRequest(body, this.store);
 
     const res = await fetch(walletUrl, {
       method: "POST",
@@ -60,6 +62,9 @@ export class WalletClient {
     });
 
     if (!res.ok) throw new Error(`Wallet addPoints failed: ${res.statusText}`);
+    // The wallet answers HTTP 200 also when it refuses: read its verdict.
+    const data = await res.json();
+    if (data?.success !== true) throw new Error(`Wallet addPoints refused: ${data?.error ?? "unknown"}`);
   }
 
   /**
